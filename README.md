@@ -1,2 +1,2 @@
 # photocol-server
-Java backend for the Photocol app
+Java backend for the photocol.Photocol app

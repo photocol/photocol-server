@@ -1,9 +1,9 @@
 import junit.framework.TestCase;
+import photocol.store.UserStore;
 
 public class PhotocolTest extends TestCase {
-    public void testPhotocol() throws Exception {
-        Photocol.main(new String[]{});
-
-        assertTrue(2 == 2);
+    public void testPhotocol() {
+        assertEquals(new UserStore().getUsers().length, 2);
+        assertEquals(new UserStore().getUsers().length, 3);
     }
 }

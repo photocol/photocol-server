@@ -1,7 +1,9 @@
 package photocol;
 
+import spark.Spark;
+
 public class Photocol {
     public static void main(String[] args) {
-        System.out.println("Hello, world from photocol.Photocol!");
+        Spark.get("/", (req, res) -> "Hello, world!");
     }
 }

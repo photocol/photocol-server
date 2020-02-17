@@ -8,10 +8,11 @@ import photocol.store.UserStore;
 
 public class Photocol {
     public static void main(String[] args) {
+        // initialize data store managers; short names b/c these will be used very often
         UserStore us = new UserStore();
         PhotoStore ps = new PhotoStore();
         CollectionStore cs = new CollectionStore();
 
-        Endpoints ep = new Endpoints(us, ps, cs);
+        new Endpoints(us, ps, cs);
     }
 }

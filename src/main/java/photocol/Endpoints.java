@@ -6,6 +6,7 @@ import photocol.store.CollectionStore;
 import photocol.store.PhotoStore;
 import photocol.store.UserStore;
 import spark.Request;
+import spark.Response;
 import spark.Spark;
 
 public class Endpoints {
@@ -20,25 +21,37 @@ public class Endpoints {
         this.cs = cs;
 
         // login endpoints
-        Spark.post("/signup", (req, res) -> dummyHandler(req));
-        Spark.post("/login", (req, res) -> dummyHandler(req));
-        Spark.get("/logout", (req, res) -> dummyHandler(req));
+        Spark.post("/signup", us::signUp);
+        Spark.post("/login", us::logIn);
+        Spark.get("/logout", us::logOut);
+        Spark.get("/userdetails", us::getLoggedInUser);
 
         // get user/collection/image data
-        Spark.get("/user/:username", (req, res) -> dummyHandler(req));
-        Spark.get("/collection/:username/:collection", (req, res) -> dummyHandler(req));
-        Spark.get("/images/:imageuri", (req, res) -> dummyHandler(req));
+        Spark.get("/user/:username", this::dummyHandler);
+        Spark.get("/collection/:username/:collection", this::dummyHandler);
+        Spark.get("/images/:imageuri", this::dummyHandler);
 
         // create/edit/delete user/collection/image data
-        Spark.put("/collection/:collection", (req, res) -> dummyHandler(req));
-        Spark.put("/collection/:collection/:image", (req, res) -> dummyHandler(req));
-        Spark.post("/user/edit", (req, res) -> dummyHandler(req));
-        Spark.post("/collection/:collection/edit", (req, res) -> dummyHandler(req));
-        Spark.post("/collection/:collection/:image/edit", (req, res) -> dummyHandler(req));
+        Spark.put("/collection/:collection", this::dummyHandler);
+        Spark.put("/collection/:collection/:image", this::dummyHandler);
+        Spark.post("/user/edit", this::dummyHandler);
+        Spark.post("/collection/:collection/edit", this::dummyHandler);
+        Spark.post("/collection/:collection/:image/edit", this::dummyHandler);
+
+        // catch-all; 404
+        Spark.get("/*", this::handle404);
+        Spark.post("/*", this::handle404);
+        Spark.put("/*", this::handle404);
+        Spark.delete("/*", this::handle404);
+    }
+
+    private String handle404(Request req, Response res) {
+        res.status(404);
+        return "";
     }
 
     // for testing only; will throw an exception if called
-    private String dummyHandler(Request req) {
+    private String dummyHandler(Request req, Response res) {
         throw new RuntimeException();
     }
 }

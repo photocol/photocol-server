@@ -1,12 +1,19 @@
 package photocol.model;
 
-import spark.Request;
-import spark.Response;
-
 public class User {
+    private String username;
+    private String passwordHash;
 
-    public void userSignUp(Request req, Response res) {
-
+    public User(String username, String passwordHash) {
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
+    public String getUsername() {
+        return this.username;
+    }
+
+    public boolean validatePasswordHash(String testHash) {
+        return testHash.equals(passwordHash);
+    }
 }

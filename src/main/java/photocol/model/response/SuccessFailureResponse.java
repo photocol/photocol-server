@@ -1,10 +1,11 @@
 package photocol.model.response;
 
-public class SuccessFailureResponse {
+// phase this out for StatusResponse -- more detail than simply boolean
+public class SuccessFailureResponse<T> {
     boolean success;
-    Object payload;
+    T payload;
 
-    public SuccessFailureResponse(boolean success, Object payload) {
+    public SuccessFailureResponse(boolean success, T payload) {
         this.success =  success;
         this.payload = payload;
     }

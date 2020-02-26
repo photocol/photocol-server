@@ -11,20 +11,20 @@ import spark.Spark;
 
 public class Endpoints {
 
-    private UserStore us;
-    private PhotoStore ps;
-    private CollectionStore cs;
+    private UserStore userStore;
+    private PhotoStore photoStore;
+    private CollectionStore collectionStore;
 
-    public Endpoints(UserStore us, PhotoStore ps, CollectionStore cs) {
-        this.us = us;
-        this.ps = ps;
-        this.cs = cs;
+    public Endpoints(UserStore userStore, PhotoStore photoStore, CollectionStore collectionStore) {
+        this.userStore = userStore;
+        this.photoStore = photoStore;
+        this.collectionStore = collectionStore;
 
         // login endpoints
-        Spark.post("/signup", us::signUp);
-        Spark.post("/login", us::logIn);
-        Spark.get("/logout", us::logOut);
-        Spark.get("/userdetails", us::getLoggedInUser);
+        Spark.post("/signup", userStore::signUp);
+        Spark.post("/login", userStore::logIn);
+        Spark.get("/logout", userStore::logOut);
+        Spark.get("/userdetails", userStore::getLoggedInUser);
 
         // get user/collection/image data
         Spark.get("/user/:username", this::dummyHandler);

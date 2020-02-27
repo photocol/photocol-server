@@ -1,4 +1,4 @@
-package photocol.store;
+package photocol.layer.store;
 
 import photocol.model.PhotoCollection;
 import photocol.model.User;

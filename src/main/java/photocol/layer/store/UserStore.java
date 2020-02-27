@@ -1,4 +1,4 @@
-package photocol.store;
+package photocol.layer.store;
 
 import com.google.gson.Gson;
 import photocol.model.User;

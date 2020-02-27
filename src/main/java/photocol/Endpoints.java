@@ -2,9 +2,9 @@
 
 package photocol;
 
-import photocol.store.CollectionStore;
-import photocol.store.PhotoStore;
-import photocol.store.UserStore;
+import photocol.layer.store.CollectionStore;
+import photocol.layer.store.PhotoStore;
+import photocol.layer.store.UserStore;
 import spark.Request;
 import spark.Response;
 import spark.Spark;

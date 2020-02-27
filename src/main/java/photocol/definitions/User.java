@@ -1,4 +1,4 @@
-package photocol.model;
+package photocol.definitions;
 
 public class User {
     private String username;

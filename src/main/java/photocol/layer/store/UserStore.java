@@ -1,9 +1,9 @@
 package photocol.layer.store;
 
 import com.google.gson.Gson;
-import photocol.model.User;
-import photocol.model.request.SignupRequest;
-import photocol.model.response.SuccessFailureResponse;
+import photocol.definitions.User;
+import photocol.definitions.request.SignupRequest;
+import photocol.definitions.response.SuccessFailureResponse;
 import spark.Request;
 import spark.Response;
 import java.util.HashMap;

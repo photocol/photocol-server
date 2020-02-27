@@ -1,4 +1,4 @@
-package photocol.model.request;
+package photocol.definitions.request;
 
 public class SignupRequest {
     public String username;

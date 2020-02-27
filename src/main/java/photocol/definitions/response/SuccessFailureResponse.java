@@ -1,4 +1,4 @@
-package photocol.model.response;
+package photocol.definitions.response;
 
 // phase this out for StatusResponse -- more detail than simply boolean
 public class SuccessFailureResponse<T> {

@@ -1,4 +1,4 @@
-package photocol.model.response;
+package photocol.definitions.response;
 
 // return a status code with an optional payload
 public class StatusResponse<T> {

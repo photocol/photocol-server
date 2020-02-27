@@ -1,8 +1,8 @@
 package photocol.layer.store;
 
-import photocol.model.PhotoCollection;
-import photocol.model.User;
-import photocol.model.response.StatusResponse;
+import photocol.definitions.PhotoCollection;
+import photocol.definitions.User;
+import photocol.definitions.response.StatusResponse;
 
 public class CollectionStore {
 

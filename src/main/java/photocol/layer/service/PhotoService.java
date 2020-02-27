@@ -1,4 +1,4 @@
 package photocol.layer.service;
 
-public class ImageService {
+public class PhotoService {
 }

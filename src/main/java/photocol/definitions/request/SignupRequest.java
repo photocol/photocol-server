@@ -1,5 +1,7 @@
 package photocol.definitions.request;
 
+import photocol.definitions.User;
+
 public class SignupRequest {
     public String username;
     public String passwordHash;
@@ -11,5 +13,9 @@ public class SignupRequest {
 
     public boolean isValid() {
         return this.username!=null && this.passwordHash!=null;
+    }
+
+    public User toUser() {
+        return new User(username, passwordHash);
     }
 }

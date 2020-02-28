@@ -8,7 +8,21 @@ public class StatusResponse<T> {
     // this class to use error codes semantically
     // TODO: define many possible errors; tightly coupled to endpoints, so need to work on that as well
     public enum Status {
-        STATUS_OK(0);
+        STATUS_OK(0),
+        STATUS_MISC(1),
+        STATUS_CREDENTIALS_NOT_UNIQUE(100),
+        STATUS_USERNAME_INVALID(101),
+        STATUS_USERNAME_NOT_FOUND(102),
+        STATUS_CREDENTIALS_INVALID(103),
+        STATUS_NOT_LOGGED_IN(104),
+        STATUS_LOGGED_IN(105),
+        STATUS_COLLECTION_NAME_INVALID(200),
+        STATUS_COLLECTION_NAME_NOT_UNIQUE(201),
+        STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS(202),
+        STATUS_INVALID_COLLECTION_DESCRIPTION(203),
+        STATUS_IMAGE_MIMETYPE_INVALID(303),
+        STATUS_IMAGE_NAME_INVALID(304),
+        STATUS_IMAGE_DESCRIPTION_INVALID(305);
 
         private int intStatus;
         Status(int intStatus) {

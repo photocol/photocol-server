@@ -2,12 +2,34 @@
 
 package photocol;
 
+import com.google.gson.Gson;
+import photocol.layer.handler.CollectionHandler;
+import photocol.layer.handler.PhotoHandler;
+import photocol.layer.handler.UserHandler;
+import photocol.layer.service.CollectionService;
+import photocol.layer.service.PhotoService;
+import photocol.layer.service.UserService;
 import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
 import photocol.layer.store.UserStore;
 
 public class Photocol {
     public static void main(String[] args) {
-        new Endpoints(new UserStore(), new PhotoStore(), new CollectionStore());
+
+        Gson gson = new Gson();
+
+        UserStore userStore = new UserStore();
+        UserService userService = new UserService(userStore);
+        UserHandler userHandler = new UserHandler(userService, gson);
+
+        CollectionStore collectionStore = new CollectionStore();
+        CollectionService collectionService = new CollectionService(collectionStore);
+        CollectionHandler collectionHandler = new CollectionHandler(collectionService, gson);
+
+        PhotoStore photoStore = new PhotoStore();
+        PhotoService photoService = new PhotoService(photoStore);
+        PhotoHandler photoHandler = new PhotoHandler(photoService, gson);
+
+        new Endpoints(userHandler, collectionHandler, photoHandler);
     }
 }

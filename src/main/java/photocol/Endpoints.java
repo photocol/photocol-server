@@ -2,29 +2,22 @@
 
 package photocol;
 
-import photocol.layer.store.CollectionStore;
-import photocol.layer.store.PhotoStore;
-import photocol.layer.store.UserStore;
+import photocol.layer.handler.CollectionHandler;
+import photocol.layer.handler.PhotoHandler;
+import photocol.layer.handler.UserHandler;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
 
 public class Endpoints {
 
-    private UserStore userStore;
-    private PhotoStore photoStore;
-    private CollectionStore collectionStore;
-
-    public Endpoints(UserStore userStore, PhotoStore photoStore, CollectionStore collectionStore) {
-        this.userStore = userStore;
-        this.photoStore = photoStore;
-        this.collectionStore = collectionStore;
+    public Endpoints(UserHandler userHandler, CollectionHandler collectionHandler, PhotoHandler photoHandler) {
 
         // login endpoints
-        Spark.post("/signup", userStore::signUp);
-        Spark.post("/login", userStore::logIn);
-        Spark.get("/logout", userStore::logOut);
-        Spark.get("/userdetails", userStore::getLoggedInUser);
+        Spark.post("/signup", userHandler::signUp);
+        Spark.post("/login", userHandler::login);
+        Spark.get("/logout", userHandler::logout);
+        Spark.get("/userdetails", userHandler::userDetails);
 
         // get user/collection/image data
         Spark.get("/user/:username", this::dummyHandler);

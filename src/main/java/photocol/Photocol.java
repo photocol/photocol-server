@@ -12,12 +12,16 @@ import photocol.layer.service.UserService;
 import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
 import photocol.layer.store.UserStore;
+import photocol.util.S3ConnectionClient;
 
 public class Photocol {
     public static void main(String[] args) {
 
+        // services
         Gson gson = new Gson();
+        S3ConnectionClient s3 = new S3ConnectionClient();
 
+        // layers of handling
         UserStore userStore = new UserStore();
         UserService userService = new UserService(userStore);
         UserHandler userHandler = new UserHandler(userService, gson);
@@ -28,8 +32,9 @@ public class Photocol {
 
         PhotoStore photoStore = new PhotoStore();
         PhotoService photoService = new PhotoService(photoStore);
-        PhotoHandler photoHandler = new PhotoHandler(photoService, gson);
+        PhotoHandler photoHandler = new PhotoHandler(photoService, gson, s3);
 
+        // init handlers (highest layer) at all endpoints
         new Endpoints(userHandler, collectionHandler, photoHandler);
     }
 }

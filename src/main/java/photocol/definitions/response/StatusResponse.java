@@ -10,6 +10,7 @@ public class StatusResponse<T> {
     public enum Status {
         STATUS_OK(0),
         STATUS_MISC(1),
+        STATUS_HTTP_ERROR(2),
         STATUS_CREDENTIALS_NOT_UNIQUE(100),
         STATUS_USERNAME_INVALID(101),
         STATUS_USERNAME_NOT_FOUND(102),

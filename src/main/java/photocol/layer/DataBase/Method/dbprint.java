@@ -8,8 +8,9 @@ public class dbprint {
         try{
             while(rs.next()){
                 for(int i = 1; i <= rs.getMetaData().getColumnCount(); i++){
-                    System.out.println(rs.getString(i)+"\t");
+                    System.out.print(rs.getString(i)+"\t");
                 }
+                System.out.println("");
             }
         }
         catch(SQLException ex){

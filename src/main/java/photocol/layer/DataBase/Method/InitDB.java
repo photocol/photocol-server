@@ -52,6 +52,7 @@ public class InitDB {
             cmd = "CREATE DATABASE IF NOT EXISTS " + dbname + ";";
             ResultSet rs = stat.executeQuery(cmd);
             cmd = "USE " + dbname;
+            rs = stat.executeQuery(cmd);
         } catch (SQLException SER){
             System.out.println("SQL Error");
         } catch (Exception er){

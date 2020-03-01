@@ -28,7 +28,7 @@ public class UserStore {
             return "";
         }
 
-        User newUser = new User(signupRequest.username, signupRequest.passwordHash);
+        User newUser = new User(signupRequest.username, signupRequest.email, signupRequest.passwordHash);
         users.put(signupRequest.username, newUser);
         req.session().attribute("user", newUser);
         return gson.toJson(signupRequest);

@@ -14,15 +14,15 @@ public class Endpoints {
     public Endpoints(UserHandler userHandler, CollectionHandler collectionHandler, PhotoHandler photoHandler) {
 
         // login endpoints
-        Spark.post("/signup", userHandler::signUp);
-        Spark.post("/login", userHandler::login);
-        Spark.get("/logout", userHandler::logout);
+        Spark.get("/signup", userHandler::signUp);
+        Spark.get("/login", userHandler::logIn);
+        Spark.get("/logout", userHandler::logOut);
         Spark.get("/userdetails", userHandler::userDetails);
 
         // get user/collection/image data
         Spark.get("/user/:username", this::dummyHandler);
         Spark.get("/collection/:username/:collection", this::dummyHandler);
-        Spark.get("/images/:imageuri", this::dummyHandler);
+        Spark.get("/images/:imageuri", photoHandler::permalink);
 
         // create/edit/delete user/collection/image data
         Spark.put("/collection/:collection", this::dummyHandler);

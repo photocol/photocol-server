@@ -19,7 +19,35 @@ public class UserDB {
         ureg = new TableManage(conn);
         ureg.addTable("UseRgis","email VARCHAR(255) NOT NULL UNIQUE", "username VARCHAR(255) NOT NULL", "password VARCHAR(255)");
     }
+
     public Status logIn(String email, String password){
+        /* try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT password FROM users WHERE email=?");
+            stmt.setString(1,email);
+            ResultSet rs = stmt.executeQuery();
+
+            //next we check if the result matches
+            try{
+                while(rs.next()){
+                    for(int i = 1; i <= rs.getMetaData().getColumnCount(); i++){
+                        System.out.print(rs.getString(i)+"\t");
+                    }
+                    System.out.println("");
+                }
+            }
+            catch(SQLException ex){
+                System.out.println("Print ResultSet Error in dbprint");
+            }
+        }
+        catch (SQLException SER){
+            System.out.println(SER);
+        }
+        catch (Exception er){
+
+        }
+        return null;
+
+         */
         return null;
     }
     public Status signUp(String email, String username, String password){

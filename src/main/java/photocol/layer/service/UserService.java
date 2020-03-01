@@ -16,28 +16,16 @@ public class UserService {
         this.userDB = userDB;
     }
     public Status signUp(User user){
-        if (userDB.checkIfUserExists(user.email) == STATUS_USER_NOT_FOUND) {
+        if (userDB.checkIfUserExists(user.email) == STATUS_USER_NOT_CREATED) {
             //create user;
+
             //TODO change the status code
         }
-        else if (userDB.checkIfUserExists(user.email) == STATUS_USER_FOUND){
+        else if (userDB.checkIfUserExists(user.email) == STATUS_USER_CREATED){
             System.out.println("Email already used");
             //front end stuff
         }
         return STATUS_OK;
-    }
-
-
-    public Status logIn(User xxx) {
-
-        return null;
-    }
-
-
-
-    public Status logOut(User xxx){
-
-        return null;
     }
 
 }

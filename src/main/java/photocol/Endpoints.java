@@ -19,28 +19,8 @@ public class Endpoints {
         Spark.get("/logout", userHandler::logOut);
         Spark.get("/userdetails", userHandler::userDetails);
 
-        // get user/collection/image data
-        Spark.get("/user/:username", this::dummyHandler);
-        Spark.get("/collection/:username/:collection", this::dummyHandler);
-        Spark.get("/images/:imageuri", photoHandler::permalink);
-
-        // create/edit/delete user/collection/image data
-        Spark.put("/collection/:collection", this::dummyHandler);
-        Spark.put("/collection/:collection/:image", this::dummyHandler);
-        Spark.post("/user/edit", this::dummyHandler);
-        Spark.post("/collection/:collection/edit", this::dummyHandler);
-        Spark.post("/collection/:collection/:image/edit", this::dummyHandler);
-
-        // catch-all; 404
-        Spark.get("/*", this::handle404);
-        Spark.post("/*", this::handle404);
-        Spark.put("/*", this::handle404);
-        Spark.delete("/*", this::handle404);
-    }
-
-    private String handle404(Request req, Response res) {
-        res.status(404);
-        return "";
+        Spark.get("/image/:imageuri", photoHandler::permalink);
+        Spark.put("/image/upload/:imageuri", photoHandler::upload);
     }
 
     // for testing only; will throw an exception if called

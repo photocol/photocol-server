@@ -1,4 +1,4 @@
-package photocol.layer.DataBase;
+package photocol.layer.DataBase.Method;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

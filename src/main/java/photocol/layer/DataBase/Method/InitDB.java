@@ -1,14 +1,15 @@
-package photocol.layer.DataBase;
+package photocol.layer.DataBase.Method;
+
 
 import java.sql.*;
 
 public class InitDB {
-    private String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
-    String DB_URL = "jdbc:mysql://localhost/";
+    private final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
+    private String DB_URL = "jdbc:mysql://localhost/";
 
     //  Database credentials
-    private String USER = "root";
-    private String PASS = "password";
+    private final String USER = "root";
+    private final String PASS = "password";
     private Connection conk = null;
     public InitDB(){
         try {
@@ -44,7 +45,7 @@ public class InitDB {
     }
 
     //can also be used to add/switch databases
-    public Connection initDB(String dbname){
+    public Connection initialDB(String dbname){
         try{
             Statement stat = conk.createStatement();
             String cmd;
@@ -59,11 +60,11 @@ public class InitDB {
         return this.conk;
     }
     public Connection addDb(String dbname){
-        return this.initDB(dbname);
+        return this.initialDB(dbname);
 
     }
     public Connection switchDb(String dbname){
-        return this.initDB(dbname);
+        return this.initialDB(dbname);
     }
     private void deleteDb(String dbname){
         try{

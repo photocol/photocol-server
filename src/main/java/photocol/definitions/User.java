@@ -5,10 +5,10 @@ public class User {
     public String passwordHash;
     public String email;
 
-    public User(String username, String email, String passwordHash) {
+    public User(String email, String username,  String passwordHash) {
+        this.email = email;
         this.username = username;
         this.passwordHash = passwordHash;
-        this.email = email;
     }
 
     public String getUsername() {

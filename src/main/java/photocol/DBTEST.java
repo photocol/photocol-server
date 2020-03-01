@@ -13,7 +13,7 @@ public class DBTEST {
         y.addTable("user", "name VARCHAR(20)", "email VARCHAR(50)", "password VARCHAR(20)");
         y.addTable("collection", 2,"id INT NOT NULL","name VARCHAR(255) NOT NULL","user VARCHAR(255) NOT NULL");
         UserDB udb = new UserDB();
-        
+        //udb.logIn("victorzh716@gmail.com","password");
 
     }
 }

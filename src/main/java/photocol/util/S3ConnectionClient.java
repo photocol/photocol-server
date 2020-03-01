@@ -1,6 +1,7 @@
 package photocol.util;
 
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -29,6 +30,16 @@ public class S3ConnectionClient {
         } catch(S3Exception exception) {
             exception.printStackTrace();
             return null;
+        }
+    }
+
+    public void putObject(byte[] data, String uri) {
+        try {
+            s3.putObject(PutObjectRequest.builder().bucket(bucket).key(uri).build(),
+                    RequestBody.fromBytes(data));
+        } catch(S3Exception exception) {
+            exception.printStackTrace();
+            return;
         }
     }
 

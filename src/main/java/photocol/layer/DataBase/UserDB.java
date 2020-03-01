@@ -17,13 +17,54 @@ public class UserDB {
         UDb = new InitDB();
         conn = UDb.initialDB("USR");
         ureg = new TableManage(conn);
-        ureg.addTable("UseRgis","username VARCHAR(255) NOT NULL","email VARCHAR(255) NOT NULL UNIQUE", "password VARCHAR(255)");
+        ureg.addTable("UseRgis","email VARCHAR(255) NOT NULL UNIQUE", "username VARCHAR(255) NOT NULL", "password VARCHAR(255)");
     }
-    public void LogIn(){
 
+    public Status logIn(String email, String password){
+        /* try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT password FROM users WHERE email=?");
+            stmt.setString(1,email);
+            ResultSet rs = stmt.executeQuery();
+
+            //next we check if the result matches
+            try{
+                while(rs.next()){
+                    for(int i = 1; i <= rs.getMetaData().getColumnCount(); i++){
+                        System.out.print(rs.getString(i)+"\t");
+                    }
+                    System.out.println("");
+                }
+            }
+            catch(SQLException ex){
+                System.out.println("Print ResultSet Error in dbprint");
+            }
+        }
+        catch (SQLException SER){
+            System.out.println(SER);
+        }
+        catch (Exception er){
+
+        }
+        return null;
+
+         */
+        return null;
     }
-    public Status signUp(String username, String password, String email){
-//        PreparedStatement stmt = "INSERT INTO users values";
+    public Status signUp(String email, String username, String password){
+        try {
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO users (email, username, password) VALUES(?,?,?)");
+            stmt.setString(1, email);
+            stmt.setString(2, username);
+            stmt.setString(3, password);
+            return Status.STATUS_USER_CREATED;
+        }
+        catch (SQLException SER) {
+            System.out.println(SER);
+            return Status.STATUS_USER_NOT_CREATED;
+        }
+        catch (Exception er) {
+
+        }
         return null;
     }
 
@@ -43,9 +84,11 @@ public class UserDB {
                 return Status.STATUS_USER_FOUND;
             }
 
-        } catch (SQLException SER){
+        }
+        catch (SQLException SER){
             System.out.println(SER);
-        } catch (Exception er){
+        }
+        catch (Exception er){
 
         }
         return null;

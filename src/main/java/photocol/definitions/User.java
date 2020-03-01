@@ -1,19 +1,18 @@
 package photocol.definitions;
 
 public class User {
-    private String username;
-    private String passwordHash;
+    public String username;
+    public String passwordHash;
+    public String email;
 
-    public User(String username, String passwordHash) {
+    public User(String username, String passwordHash, String email ) {
         this.username = username;
         this.passwordHash = passwordHash;
+        this.email = email;
     }
 
     public String getUsername() {
         return this.username;
     }
 
-    public boolean validatePasswordHash(String testHash) {
-        return testHash.equals(passwordHash);
-    }
 }

@@ -5,6 +5,7 @@ import photocol.layer.DataBase.Method.InitDB;
 import photocol.layer.DataBase.Method.TableManage;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -24,15 +25,19 @@ public class UserDB {
     public void signIn(){
 
     }
-    
+
     public StatusResponse.Status checkIfUserExists(String email) {
         try {
-            //check if email is null
-            //
-            String query = "SELECT uid FROM users WHERE email =\'" + email + "\';";
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM users WHERE email=?")
+            stmt.setString(1,email);
+            ResultSet rs = stmt.executeQuery();
 
-            cmd = "DROP DATABASE IF EXISTS " + dbname + ";";
-            ResultSet rs = stat.executeQuery(cmd);
+            //next we check if rs has any contents
+            if(rs.next() == false) {
+                System.out.println("DEBUG: No User");
+                return Status.
+            }
+
         } catch (SQLException SER){
 
         } catch (Exception er){

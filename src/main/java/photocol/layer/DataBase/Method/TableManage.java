@@ -44,4 +44,13 @@ public class TableManage {
             System.out.print("addTable ERROR");
         }
     }
+    public int insert(String Tname, String valtemp /*FORMAT: val1, val2,val3*/, String ... values){
+        String cmd  = "INSERT INTO "+Tname+" ("+valtemp+") VALUES (";
+        for(String i:values){
+            cmd = cmd+i+",";
+        }
+        cmd = cmd+");";
+        System.out.println(cmd);
+        return 0;
+    }
 }

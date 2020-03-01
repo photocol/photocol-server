@@ -3,6 +3,7 @@
 package photocol;
 
 import com.google.gson.Gson;
+import photocol.layer.DataBase.UserDB;
 import photocol.layer.handler.CollectionHandler;
 import photocol.layer.handler.PhotoHandler;
 import photocol.layer.handler.UserHandler;
@@ -23,7 +24,7 @@ public class Photocol {
 
         // layers of handling
         UserStore userStore = new UserStore();
-        UserService userService = new UserService(userStore);
+        UserService userService = new UserService(new UserDB());
         UserHandler userHandler = new UserHandler(userService, gson);
 
         CollectionStore collectionStore = new CollectionStore();

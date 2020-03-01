@@ -23,7 +23,7 @@ public class UserDB {
 
     }
     public Status signUp(String username, String password, String email){
-        PreparedStatement stmt = "INSERT INTO users values";
+//        PreparedStatement stmt = "INSERT INTO users values";
         return null;
     }
 

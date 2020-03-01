@@ -21,7 +21,7 @@ public class UserHandler {
 
     public StatusResponse signUp(Request req, Response res) {
         res.type("application/json");
-        StatusResponse status;
+        StatusResponse.Status status;
 
         if(req.session().attribute("user")!=null)
             return new StatusResponse(STATUS_LOGGED_IN);
@@ -31,8 +31,8 @@ public class UserHandler {
             if(signupRequest==null || !signupRequest.isValid())
                 throw new JsonParseException("Invalid signup request");
 
-            if((status=userService.signUp(signupRequest.toServiceType())).status() != STATUS_OK)
-                return status;
+            if((status=userService.signUp(signupRequest.toServiceType())) != STATUS_OK)
+                return new StatusResponse(status);
 
             req.session().invalidate();
             req.session(true).attribute("user",signupRequest.username);
@@ -47,7 +47,7 @@ public class UserHandler {
     public StatusResponse logIn(Request req, Response res) {
         res.type("application/json");
 
-        StatusResponse status;
+        StatusResponse.Status status;
         if(req.session().attribute("user")!=null)
             return new StatusResponse(STATUS_LOGGED_IN);
 
@@ -56,8 +56,8 @@ public class UserHandler {
             if(loginRequest==null || !loginRequest.isValid())
                 throw new JsonParseException("Invalid signup request");
 
-            if((status=userService.logIn(loginRequest.toServiceType())).status() != STATUS_OK)
-                return status;
+            if((status=userService.logIn(loginRequest.toServiceType())) != STATUS_OK)
+                return new StatusResponse(status);
 
             req.session().invalidate();
             req.session(true).attribute("user", loginRequest.username);

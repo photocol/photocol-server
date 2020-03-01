@@ -1,6 +1,6 @@
 package photocol.layer.DataBase;
 
-import photocol.definitions.response.StatusResponse;
+import photocol.definitions.response.StatusResponse.Status;
 import photocol.layer.DataBase.Method.InitDB;
 import photocol.layer.DataBase.Method.TableManage;
 
@@ -22,27 +22,33 @@ public class UserDB {
     public void LogIn(){
 
     }
-    public void signIn(){
-
+    public Status signUp(String username, String password, String email){
+        PreparedStatement stmt = "INSERT INTO users values";
+        return null;
     }
 
-    public StatusResponse.Status checkIfUserExists(String email) {
+    public Status checkIfUserExists(String email) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM users WHERE email=?")
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM users WHERE email=?");
             stmt.setString(1,email);
             ResultSet rs = stmt.executeQuery();
 
             //next we check if rs has any contents
             if(rs.next() == false) {
                 System.out.println("DEBUG: No User");
-                return Status.
+                return Status.STATUS_USER_NOT_FOUND;
+            }
+            else {
+                System.out.println("DEBUG: User Found");
+                return Status.STATUS_USER_FOUND;
             }
 
         } catch (SQLException SER){
-
+            System.out.println(SER);
         } catch (Exception er){
 
         }
+        return null;
     }
 
 

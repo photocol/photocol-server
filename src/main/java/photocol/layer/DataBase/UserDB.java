@@ -19,8 +19,8 @@ public class UserDB {
         ureg = new TableManage(conn);
         ureg.addTable("UseRgis","email VARCHAR(255) NOT NULL UNIQUE", "username VARCHAR(255) NOT NULL", "password VARCHAR(255)");
     }
-    public void LogIn(){
-
+    public Status logIn(String email, String password){
+        return null;
     }
     public Status signUp(String email, String username, String password){
         try {

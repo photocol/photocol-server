@@ -13,7 +13,7 @@ public class InitDB {
     private Connection conk = null;
     public InitDB(){
         try {
-            Class.forName("org.mariadb.jdbc.Driver");
+            Class.forName(JDBC_DRIVER);
             this.conk = DriverManager.getConnection(DB_URL,USER,PASS);
         }
         catch (SQLException ser){
@@ -29,7 +29,7 @@ public class InitDB {
     public InitDB(String locale){
         this.DB_URL = locale;
         try {
-            Class.forName("org.mariadb.jdbc.Driver");
+            Class.forName(JDBC_DRIVER);
             this.conk = DriverManager.getConnection(DB_URL,USER,PASS);
         }
         catch (SQLException ser){
@@ -53,7 +53,7 @@ public class InitDB {
             ResultSet rs = stat.executeQuery(cmd);
             cmd = "USE " + dbname;
         } catch (SQLException SER){
-
+            System.out.println("SQL Error");
         } catch (Exception er){
 
         }

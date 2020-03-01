@@ -7,7 +7,7 @@ import java.sql.*;
 public class DBTEST {
     public static void main(String[] Args){
         InitDB x = new InitDB();
-        TableManage y = new TableManage(x.initialDB("photocol"));
+        Connection passthrough = x.initialDB("data");
 
     }
 }

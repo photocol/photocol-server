@@ -3,7 +3,7 @@
 package photocol;
 
 import com.google.gson.Gson;
-import photocol.layer.DataBase.UserDB;
+import photocol.layer.store.UserStore;
 import photocol.layer.handler.CollectionHandler;
 import photocol.layer.handler.PhotoHandler;
 import photocol.layer.handler.UserHandler;
@@ -12,7 +12,6 @@ import photocol.layer.service.PhotoService;
 import photocol.layer.service.UserService;
 import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
-import photocol.layer.store.UserStore;
 import photocol.util.S3ConnectionClient;
 
 public class Photocol {
@@ -23,8 +22,7 @@ public class Photocol {
         S3ConnectionClient s3 = new S3ConnectionClient();
 
         // layers of handling
-        UserStore userStore = new UserStore();
-        UserService userService = new UserService(new UserDB());
+        UserService userService = new UserService(new UserStore());
         UserHandler userHandler = new UserHandler(userService, gson);
 
         CollectionStore collectionStore = new CollectionStore();

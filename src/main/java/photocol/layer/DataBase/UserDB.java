@@ -20,23 +20,15 @@ public class UserDB {
         ureg.addTable("USERTB","email VARCHAR(100) NOT NULL UNIQUE", "username VARCHAR(100) NOT NULL", "password VARCHAR(100)");
     }
 
-    public Status logIn(String email, String password){
+    public StatusResponse<Integer> logIn(String email, String password){
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT password FROM PHOTO.USERTB WHERE email=?");
             stmt.setString(1,email);
             ResultSet rs = stmt.executeQuery();
-
-            //next we check if the result matches
-            try{
-                while(rs.next()){
-                    for(int i = 1; i <= rs.getMetaData().getColumnCount(); i++){
-                        System.out.print(rs.getString(i)+"\t");
-                    }
-                    System.out.println("");
-                }
-            }
-            catch(SQLException ex){
-                System.out.println("Print ResultSet Error in dbprint");
+            rs.next(); //iterator points to before the first result?
+            if( password.equals(rs.getString("password")) ) {
+                System.out.println(rs.getString("password"));
+                return new StatusResponse<>(STATUS_LOGGED_IN, rs.getInt(1));
             }
         }
         catch (SQLException SER){

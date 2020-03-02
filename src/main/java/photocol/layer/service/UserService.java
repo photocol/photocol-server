@@ -1,12 +1,8 @@
 package photocol.layer.service;
 
 import photocol.definitions.User;
-import photocol.definitions.request.EndpointRequestModel;
-import static photocol.definitions.response.StatusResponse.Status;
-
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.DataBase.UserDB;
-import photocol.layer.store.UserStore;
 
 import static photocol.definitions.response.StatusResponse.Status.*;
 

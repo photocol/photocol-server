@@ -1,10 +1,13 @@
 package photocol.layer.service;
 
+import photocol.definitions.Photo;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.store.PhotoStore;
 import photocol.util.S3ConnectionClient;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+
+import java.util.List;
 
 import static photocol.definitions.response.StatusResponse.Status.*;
 
@@ -51,5 +54,10 @@ public class PhotoService {
             return new StatusResponse<>(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
 
         return s3.getObject(uri);
+    }
+
+    // get user photos
+    public StatusResponse<List<Photo>> getUserPhotos(int uid) {
+        return photoStore.getUserPhotos(uid);
     }
 }

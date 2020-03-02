@@ -19,25 +19,10 @@ public class UserService {
     }
 
     public StatusResponse<Integer> signUp(User user) {
-
-        StatusResponse<Integer> status= userDB.checkIfUserExists(user.email);
-        if (status == STATUS_USER_NOT_FOUND) {
-            status=userDB.signUp(user.email, user.username, user.passwordHash)).status()
-            //create users
-            if (status == STATUS_USER_CREATED) {
-                return STATUS_OK;
-            }
-            else {
-                return status
-            }
-            //TODO change the status code
-        }
-        else if {
-            System.out.println("Email already used");
-            return STATUS_CREDENTIALS_NOT_UNIQUE;
-            //front end stuff
-        }
-
+        if (userDB.checkIfUserExists(user.email).status() == STATUS_USER_NOT_FOUND)
+            return userDB.signUp(user.email, user.username, user.passwordHash);
+        else
+            return new StatusResponse<>(STATUS_CREDENTIALS_NOT_UNIQUE);
     }
 
     public Status logIn(User user) {

@@ -10,8 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static photocol.definitions.response.StatusResponse.Status.STATUS_USER_CREATED;
-import static photocol.definitions.response.StatusResponse.Status.STATUS_USER_NOT_CREATED;
+import static photocol.definitions.response.StatusResponse.Status.*;
 
 public class UserDB {
     InitDB UDb = null;
@@ -60,43 +59,23 @@ public class UserDB {
             stmt.setString(3, password);
             stmt.executeUpdate();
             return new StatusResponse<>(STATUS_USER_CREATED, 12321321);
-        }
-        catch (SQLException SER) {
-            System.out.println(SER);
-            SER.printStackTrace();
-            return new StatusResponse<>(STATUS_USER_NOT_CREATED);
-        }
-        catch (Exception er) {
-            er.printStackTrace();
+        } catch (Exception eer) {
+            eer.printStackTrace();
             return new StatusResponse<>(STATUS_USER_NOT_CREATED);
         }
     }
 
-    public Status checkIfUserExists(String email) {
+    public StatusResponse checkIfUserExists(String email) {
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM USERTB WHERE email=?");
             stmt.setString(1,email);
             ResultSet rs = stmt.executeQuery();
 
-            //next we check if rs has any contents
-            if(rs.next() == false) {
-                System.out.println("DEBUG: No User");
-                return Status.STATUS_USER_NOT_FOUND;
-            }
-            else {
-                System.out.println("DEBUG: User Found");
-                return Status.STATUS_USER_FOUND;
-            }
-
+            return new StatusResponse(rs.next() ? STATUS_USER_FOUND : STATUS_USER_NOT_FOUND);
+        } catch (Exception err){
+            err.printStackTrace();
+            return new StatusResponse(STATUS_USER_NOT_FOUND);
         }
-        catch (SQLException SER){
-            System.out.println(SER);
-            SER.printStackTrace();
-        }
-        catch (Exception er){
-            er.printStackTrace();
-        }
-        return null;
     }
 
 

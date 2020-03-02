@@ -52,6 +52,8 @@ public class PhotoHandler {
         byte[] data = req.bodyAsBytes();
         String user = req.session().attribute("user");
 
+        res.type("application/json");
+
         // get extension
         String imageuri = req.params("imageuri").replaceAll("/", "");
         int extPos = imageuri.lastIndexOf('.');
@@ -76,6 +78,12 @@ public class PhotoHandler {
 
     // update image attributes
     public StatusResponse update(Request req, Response res) {
+        res.type("application/json");
+
+        // TODO: @tiffany implement this in service layer
+        // photoService.updateImage();
+
+        // TODO: working here
         return null;
     }
 }

@@ -1,6 +1,7 @@
 package photocol.layer.handler;
 
 import com.google.gson.Gson;
+import photocol.definitions.Photo;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.service.PhotoService;
 import photocol.util.S3ConnectionClient;
@@ -8,6 +9,8 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import spark.Request;
 import spark.Response;
+
+import java.util.List;
 
 import static photocol.definitions.response.StatusResponse.Status.*;
 
@@ -62,6 +65,19 @@ public class PhotoHandler {
 
         // get file data
         return photoService.upload(req.contentType(), req.bodyAsBytes(), req.params("imageuri"), uid);
+    }
+
+    // show all photos owned by user
+    public StatusResponse<List<Photo>> showUserPhotos(Request req, Response res) {
+        res.type("application/json");
+
+        // make sure logged in
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            return new StatusResponse<>(STATUS_NOT_LOGGED_IN);
+
+        // get all photos
+        return photoService.getUserPhotos(uid);
     }
 
     // update image attributes

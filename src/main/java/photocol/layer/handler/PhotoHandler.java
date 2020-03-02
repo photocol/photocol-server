@@ -9,7 +9,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import spark.Request;
 import spark.Response;
 
-import static photocol.definitions.response.StatusResponse.Status.STATUS_OK;
+import static photocol.definitions.response.StatusResponse.Status.*;
 
 public class PhotoHandler {
 
@@ -48,32 +48,15 @@ public class PhotoHandler {
 
     // handle put request of uploading image
     public StatusResponse<String> upload(Request req, Response res) {
-        String contentType = req.contentType();
-        byte[] data = req.bodyAsBytes();
-        String user = req.session().attribute("user");
-
         res.type("application/json");
 
-        // get extension
-        String imageuri = req.params("imageuri").replaceAll("/", "");
-        int extPos = imageuri.lastIndexOf('.');
-        String ext = (extPos==imageuri.length()-1 || extPos==-1) ? "" : imageuri.substring(extPos+1);
+        // make sure logged in
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            return new StatusResponse<>(STATUS_NOT_LOGGED_IN);
 
-        // for now: allow anyone to upload an image
-//        if(user==null)
-//            return new StatusResponse<>(StatusResponse.Status.STATUS_NOT_LOGGED_IN);
-
-        if(contentType==null || contentType.equals("")) {
-            // TODO: do MIME type validation
-        }
-
-        // TODO: @tiffany move this request to service layer, i.e.:
-        // photoService.upload(contentType, data, user);
-
-        String randUri = String.valueOf(Math.random()).substring(2) + "." + ext;
-        s3.putObject(data, randUri);
-
-        return new StatusResponse<>(STATUS_OK, randUri);
+        // get file data
+        return photoService.upload(req.contentType(), req.bodyAsBytes(), uid);
     }
 
     // update image attributes

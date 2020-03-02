@@ -86,13 +86,13 @@ public class UserHandler {
         return new StatusResponse(STATUS_OK);
     }
 
-    public StatusResponse<String> userDetails(Request req, Response res) {
+    public StatusResponse<Boolean> userDetails(Request req, Response res) {
         res.type("application/json");
 
         if(req.session().attribute("uid")==null)
             return new StatusResponse(STATUS_NOT_LOGGED_IN);
 
-        return new StatusResponse<>(STATUS_OK, req.session().attribute("user"));
+        return new StatusResponse<>(STATUS_OK, req.session().attribute("uid")!=null);
     }
 
 }

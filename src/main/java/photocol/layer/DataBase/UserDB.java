@@ -15,6 +15,7 @@ public class UserDB {
     TableManage ureg = null;
     public UserDB(){
         UDb = new InitDB();
+        conn = UDb.initialDB("USR");
         ureg = new TableManage(conn);
     }
 

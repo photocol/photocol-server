@@ -23,7 +23,7 @@ public class UserHandler {
         res.type("application/json");
         StatusResponse status;
 
-        if(req.session().attribute("user")!=null)
+        if(req.session().attribute("uid")!=null)
             return new StatusResponse(STATUS_LOGGED_IN);
 
         try {
@@ -35,7 +35,10 @@ public class UserHandler {
                 return status;
 
             req.session().invalidate();
-            req.session(true).attribute("user",signupRequest.username);
+            req.session(true).attribute("uid", status.payload());
+
+            // TODO: remove; for debugging
+            System.out.printf("UID %d signed up.%n", status.payload());
 
             return new StatusResponse(STATUS_OK);
         } catch(JsonParseException e) {
@@ -47,8 +50,8 @@ public class UserHandler {
     public StatusResponse logIn(Request req, Response res) {
         res.type("application/json");
 
-        StatusResponse.Status status;
-        if(req.session().attribute("user")!=null)
+        StatusResponse status;
+        if(req.session().attribute("uid")!=null)
             return new StatusResponse(STATUS_LOGGED_IN);
 
         try {
@@ -56,11 +59,14 @@ public class UserHandler {
             if(loginRequest==null || !loginRequest.isValid())
                 throw new JsonParseException("Invalid signup request");
 
-            if((status=userService.logIn(loginRequest.toServiceType())) != STATUS_OK)
-                return new StatusResponse(status);
+            if((status=userService.logIn(loginRequest.toServiceType())).status() != STATUS_OK)
+                return status;
+
+            // TODO: remove; for debugging
+            System.out.printf("UID %d logged in.%n", status.payload());
 
             req.session().invalidate();
-            req.session(true).attribute("user", loginRequest.username);
+            req.session(true).attribute("uid", status.payload());
             return new StatusResponse(STATUS_OK);
         } catch (JsonParseException e) {
             res.status(400);
@@ -70,8 +76,11 @@ public class UserHandler {
 
     public StatusResponse logOut(Request req, Response res) {
         res.type("application/json");
-        if(req.session().attribute("user")==null)
+        if(req.session().attribute("uid")==null)
             return new StatusResponse(STATUS_NOT_LOGGED_IN);
+
+        // TODO: remove; for debugging
+        System.out.printf("UID %d logged out.%n", req.session().attribute("uid"));
 
         req.session().invalidate();
         return new StatusResponse(STATUS_OK);
@@ -80,7 +89,7 @@ public class UserHandler {
     public StatusResponse<String> userDetails(Request req, Response res) {
         res.type("application/json");
 
-        if(req.session().attribute("user")==null)
+        if(req.session().attribute("uid")==null)
             return new StatusResponse(STATUS_NOT_LOGGED_IN);
 
         return new StatusResponse<>(STATUS_OK, req.session().attribute("user"));

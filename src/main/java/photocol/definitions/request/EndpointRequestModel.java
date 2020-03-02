@@ -25,7 +25,7 @@ public class EndpointRequestModel {
 
         @Override
         public User toServiceType() {
-            return new User(username, email,passwordHash);
+            return new User(email, username, passwordHash);
         }
     }
 
@@ -43,7 +43,7 @@ public class EndpointRequestModel {
 
         @Override
         public User toServiceType() {
-            return new User(username, email, passwordHash);
+            return new User(email, username, passwordHash);
         }
     }
 }

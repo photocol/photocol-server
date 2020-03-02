@@ -50,6 +50,6 @@ public class StatusResponse<T> {
         return status;
     }
     public T payload() {
-        return status()==Status.STATUS_OK ? null : this.payload;
+        return status()==Status.STATUS_OK ? this.payload : null;
     }
 }

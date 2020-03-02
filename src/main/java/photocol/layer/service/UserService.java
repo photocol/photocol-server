@@ -20,13 +20,14 @@ public class UserService {
 
     public StatusResponse<Integer> signUp(User user) {
         if (userDB.checkIfUserExists(user.email).status() == STATUS_USER_NOT_FOUND)
-            return userDB.signUp(user.email, user.username, user.passwordHash);
-        else
-            return new StatusResponse<>(STATUS_CREDENTIALS_NOT_UNIQUE);
+            return userDB.createUser(user.email, user.username, user.passwordHash);
+        return new StatusResponse<>(STATUS_CREDENTIALS_NOT_UNIQUE);
     }
 
-    public Status logIn(User user) {
-        return STATUS_OK;
+    public StatusResponse<Integer> logIn(User user) {
+        if(userDB.checkIfUserExists(user.email).status() == STATUS_USER_NOT_FOUND)
+            return new StatusResponse<>(STATUS_USER_NOT_FOUND);
+        return userDB.checkCredentials(user.email, user.passwordHash);
     }
 
 }

@@ -16,8 +16,8 @@ public class Endpoints {
                      Gson gson) {
 
         // login endpoints
-        Spark.get("/signup", userHandler::signUp, gson::toJson);
-        Spark.get("/login", userHandler::logIn, gson::toJson);
+        Spark.post("/signup", userHandler::signUp, gson::toJson);
+        Spark.post("/login", userHandler::logIn, gson::toJson);
         Spark.get("/logout", userHandler::logOut, gson::toJson);
         Spark.get("/userdetails", userHandler::userDetails, gson::toJson);
 

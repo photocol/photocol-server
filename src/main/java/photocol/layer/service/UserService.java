@@ -37,4 +37,5 @@ public class UserService {
     public Status logIn(User user) {
         return STATUS_OK;
     }
+
 }

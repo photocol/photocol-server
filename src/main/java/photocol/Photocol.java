@@ -32,7 +32,7 @@ public class Photocol {
         CollectionHandler collectionHandler = new CollectionHandler(collectionService, gson);
 
         PhotoStore photoStore = new PhotoStore();
-        PhotoService photoService = new PhotoService(photoStore);
+        PhotoService photoService = new PhotoService(photoStore, s3);
         PhotoHandler photoHandler = new PhotoHandler(photoService, gson, s3);
 
         // init handlers (highest layer) at all endpoints

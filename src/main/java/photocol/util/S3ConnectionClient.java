@@ -29,12 +29,14 @@ public class S3ConnectionClient {
         }
     }
 
-    public ResponseInputStream<GetObjectResponse> getObject(String key) {
+    public StatusResponse<ResponseInputStream<GetObjectResponse>> getObject(String key) {
         try {
-            return s3.getObject(GetObjectRequest.builder().bucket(bucket).key(key).build());
+            return new StatusResponse<>(STATUS_OK,
+                    s3.getObject(GetObjectRequest.builder().bucket(bucket).key(key).build()));
         } catch(S3Exception exception) {
             exception.printStackTrace();
-            return null;
+            // TODO: use more descriptive status
+            return new StatusResponse<>(STATUS_MISC);
         }
     }
 
@@ -45,6 +47,7 @@ public class S3ConnectionClient {
             return new StatusResponse(STATUS_OK);
         } catch(S3Exception exception) {
             exception.printStackTrace();
+            // TODO: use more descriptive status
             return new StatusResponse(STATUS_MISC);
         }
     }

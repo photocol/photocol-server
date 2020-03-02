@@ -25,18 +25,23 @@ public class PhotoHandler {
     // simple image passthrough from s3
     // todo: move this to service layer, add authentication
     public Object permalink(Request req, Response res) {
-        String imageName = req.params("imageuri");
+        String uri = req.params("imageuri");
         String conditionalHeader = req.headers("If-None-Match");
         String eTag;
+        int uid = req.session().attribute("uid");
 
-        // TODO: @tiffany move this request to service layer (and rest of s3 code)
-        ResponseInputStream<GetObjectResponse> response = s3.getObject(imageName);
+        StatusResponse<ResponseInputStream<GetObjectResponse>> status;
+        if((status=photoService.permalink(uri, uid)).status()!=STATUS_OK) {
+            res.status(404);
+            return "";
+        }
 
         // caching with etags
+        ResponseInputStream<GetObjectResponse> response = status.payload();
         eTag = response.response().eTag();
         if (conditionalHeader != null && conditionalHeader.equals(eTag)) {
             res.status(304);
-            return 0;
+            return "";
         }
         res.type(response.response().contentType());
         res.header("Cache-Control", "public, max-age=3600");
@@ -56,7 +61,7 @@ public class PhotoHandler {
             return new StatusResponse<>(STATUS_NOT_LOGGED_IN);
 
         // get file data
-        return photoService.upload(req.contentType(), req.bodyAsBytes(), uid);
+        return photoService.upload(req.contentType(), req.bodyAsBytes(), req.params("imageuri"), uid);
     }
 
     // update image attributes

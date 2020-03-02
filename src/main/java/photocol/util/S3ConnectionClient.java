@@ -1,6 +1,5 @@
 package photocol.util;
 
-import jdk.net.SocketFlow;
 import photocol.definitions.response.StatusResponse;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;

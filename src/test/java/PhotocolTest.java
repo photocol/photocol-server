@@ -66,7 +66,9 @@ public class PhotocolTest extends TestCase {
     }
 
     public void testPhotocol() throws Exception {
+            request("/image/4k.jpg", "GET" );
 //        // can run assertions here (e.g., check status code of requests)
+
 //        assertEquals(200, request("/login", "POST",
 //                "{\"username\":\"man\",\"passwordHash\":\"abcdef\"}"));
 //        assertEquals(200, request("/signup", "POST",

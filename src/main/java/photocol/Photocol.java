@@ -36,6 +36,6 @@ public class Photocol {
         PhotoHandler photoHandler = new PhotoHandler(photoService, gson, s3);
 
         // init handlers (highest layer) at all endpoints
-        new Endpoints(userHandler, collectionHandler, photoHandler);
+        new Endpoints(userHandler, collectionHandler, photoHandler, gson);
     }
 }

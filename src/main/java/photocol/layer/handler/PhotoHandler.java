@@ -47,7 +47,7 @@ public class PhotoHandler {
     }
 
     // handle put request of uploading image
-    public Object upload(Request req, Response res) {
+    public StatusResponse<String> upload(Request req, Response res) {
         String contentType = req.contentType();
         byte[] data = req.bodyAsBytes();
         String user = req.session().attribute("user");
@@ -71,6 +71,11 @@ public class PhotoHandler {
         String randUri = String.valueOf(Math.random()).substring(2) + "." + ext;
         s3.putObject(data, randUri);
 
-        return gson.toJson(new StatusResponse<>(STATUS_OK, randUri));
+        return new StatusResponse<>(STATUS_OK, randUri);
+    }
+
+    // update image attributes
+    public StatusResponse update(Request req, Response res) {
+        return null;
     }
 }

@@ -53,10 +53,10 @@ public class InitDB {
             ResultSet rs = stat.executeQuery(cmd);
             cmd = "USE " + dbname;
             rs = stat.executeQuery(cmd);
-        } catch (SQLException SER){
-            System.out.println("SQL Error");
-        } catch (Exception er){
-
+        } catch (SQLException err){
+            err.printStackTrace();
+        } catch (Exception err){
+            err.printStackTrace();
         }
         return this.conk;
     }
@@ -73,10 +73,10 @@ public class InitDB {
             String cmd;
             cmd = "DROP DATABASE IF EXISTS " + dbname + ";";
             ResultSet rs = stat.executeQuery(cmd);
-        } catch (SQLException SER){
-
-        } catch (Exception er){
-
+        } catch (SQLException err){
+            err.printStackTrace();
+        } catch (Exception err){
+            err.printStackTrace();
         }
     }
 }

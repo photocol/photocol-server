@@ -15,31 +15,9 @@ public class UserDB {
     TableManage ureg = null;
     public UserDB(){
         UDb = new InitDB();
-        conn = UDb.initialDB("USR");
         ureg = new TableManage(conn);
-        ureg.addTable("USERTB","email VARCHAR(100) NOT NULL UNIQUE", "username VARCHAR(100) NOT NULL", "password VARCHAR(100)");
     }
 
-    public StatusResponse<Integer> logIn(String email, String password){
-        try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT password FROM PHOTO.USERTB WHERE email=?");
-            stmt.setString(1,email);
-            ResultSet rs = stmt.executeQuery();
-            rs.next(); //iterator points to before the first result?
-            if( password.equals(rs.getString("password")) ) {
-                System.out.println(rs.getString("password"));
-                return new StatusResponse<>(STATUS_LOGGED_IN, rs.getInt(1));
-            }
-        }
-        catch (SQLException SER){
-            System.out.println(SER);
-            SER.printStackTrace();
-        }
-        catch (Exception er){
-            er.printStackTrace();
-        }
-        return null;
-    }
     public StatusResponse<Integer> createUser(String email, String username, String password){
         try {
             PreparedStatement stmt =

@@ -8,8 +8,8 @@ import java.sql.*;
 public class DBTEST {
     public static void main(String[] Args) throws SQLException {
         UserDB udb = new UserDB();
-        udb.signUp("victorzh716@gmail.com", "victooor", "pw123");
-        udb.logIn("victorzh716@gmail.com","pw123");
+        udb.createUser("victorzh716@gmail.com", "victooor", "pw123");
+        udb.checkCredentials("victorzh716@gmail.com","pw123");
 
 
     }

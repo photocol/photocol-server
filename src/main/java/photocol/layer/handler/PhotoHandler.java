@@ -31,7 +31,11 @@ public class PhotoHandler {
         String uri = req.params("imageuri");
         String conditionalHeader = req.headers("If-None-Match");
         String eTag;
-        int uid = req.session().attribute("uid");
+        Integer uid = req.session().attribute("uid");
+        if(uid==null) {
+            res.status(404);
+            return "";
+        }
 
         StatusResponse<ResponseInputStream<GetObjectResponse>> status;
         if((status=photoService.permalink(uri, uid)).status()!=STATUS_OK) {
@@ -68,7 +72,7 @@ public class PhotoHandler {
     }
 
     // show all photos owned by user
-    public StatusResponse<List<Photo>> showUserPhotos(Request req, Response res) {
+    public StatusResponse<List<Photo>> getUserPhotos(Request req, Response res) {
         res.type("application/json");
 
         // make sure logged in

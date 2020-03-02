@@ -4,6 +4,7 @@ import photocol.definitions.User;
 import photocol.definitions.request.EndpointRequestModel;
 import static photocol.definitions.response.StatusResponse.Status;
 
+import photocol.definitions.response.StatusResponse;
 import photocol.layer.DataBase.UserDB;
 import photocol.layer.store.UserStore;
 
@@ -17,21 +18,26 @@ public class UserService {
         this.userDB = userDB;
     }
 
-    public Status signUp(User user) {
-        if (userDB.checkIfUserExists(user.email) == STATUS_USER_NOT_FOUND) {
+    public StatusResponse<Integer> signUp(User user) {
+
+        StatusResponse<Integer> status= userDB.checkIfUserExists(user.email);
+        if (status == STATUS_USER_NOT_FOUND) {
+            status=userDB.signUp(user.email, user.username, user.passwordHash)).status()
             //create users
-            if (userDB.signUp(user.email, user.username, user.passwordHash) == STATUS_USER_CREATED) {
-
-            } else if (userDB.signUp(user.email, user.username, user.passwordHash) == STATUS_USER_NOT_CREATED) {
-
+            if (status == STATUS_USER_CREATED) {
+                return STATUS_OK;
             }
-
+            else {
+                return status
+            }
             //TODO change the status code
-        } else if (userDB.checkIfUserExists(user.email) == STATUS_USER_FOUND) {
+        }
+        else if {
             System.out.println("Email already used");
+            return STATUS_CREDENTIALS_NOT_UNIQUE;
             //front end stuff
         }
-        return STATUS_OK;
+
     }
 
     public Status logIn(User user) {

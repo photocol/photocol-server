@@ -28,4 +28,8 @@ public class UserService {
         return STATUS_OK;
     }
 
+    public Status logIn(User user) {
+        return STATUS_OK;
+    }
+
 }

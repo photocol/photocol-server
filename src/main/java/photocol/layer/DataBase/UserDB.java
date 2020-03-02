@@ -1,5 +1,6 @@
 package photocol.layer.DataBase;
 
+import photocol.definitions.response.StatusResponse;
 import photocol.definitions.response.StatusResponse.Status;
 import photocol.layer.DataBase.Method.InitDB;
 import photocol.layer.DataBase.Method.TableManage;
@@ -9,6 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static photocol.definitions.response.StatusResponse.Status.STATUS_USER_CREATED;
+import static photocol.definitions.response.StatusResponse.Status.STATUS_USER_NOT_CREATED;
+
 public class UserDB {
     InitDB UDb = null;
     Connection conn = null;
@@ -17,12 +21,12 @@ public class UserDB {
         UDb = new InitDB();
         conn = UDb.initialDB("USR");
         ureg = new TableManage(conn);
-        ureg.addTable("UseRgis","email VARCHAR(255) NOT NULL UNIQUE", "username VARCHAR(255) NOT NULL", "password VARCHAR(255)");
+        ureg.addTable("USERTB","email VARCHAR(100) NOT NULL UNIQUE", "username VARCHAR(100) NOT NULL", "password VARCHAR(100)");
     }
 
     public Status logIn(String email, String password){
-        /* try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT password FROM users WHERE email=?");
+        try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT password FROM USERTB WHERE email=?");
             stmt.setString(1,email);
             ResultSet rs = stmt.executeQuery();
 
@@ -41,36 +45,36 @@ public class UserDB {
         }
         catch (SQLException SER){
             System.out.println(SER);
+            SER.printStackTrace();
         }
         catch (Exception er){
-
+            er.printStackTrace();
         }
         return null;
-
-         */
-        return null;
     }
-    public Status signUp(String email, String username, String password){
+    public StatusResponse<Integer> signUp(String email, String username, String password){
         try {
-            PreparedStatement stmt = conn.prepareStatement("INSERT INTO users (email, username, password) VALUES(?,?,?)");
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO USERTB (email, username, password) VALUES(?,?,?)");
             stmt.setString(1, email);
             stmt.setString(2, username);
             stmt.setString(3, password);
-            return Status.STATUS_USER_CREATED;
+            stmt.executeUpdate();
+            return new StatusResponse<>(STATUS_USER_CREATED, 12321321);
         }
         catch (SQLException SER) {
             System.out.println(SER);
-            return Status.STATUS_USER_NOT_CREATED;
+            SER.printStackTrace();
+            return new StatusResponse<>(STATUS_USER_NOT_CREATED);
         }
         catch (Exception er) {
-
+            er.printStackTrace();
+            return new StatusResponse<>(STATUS_USER_NOT_CREATED);
         }
-        return null;
     }
 
     public Status checkIfUserExists(String email) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM users WHERE email=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM USERTB WHERE email=?");
             stmt.setString(1,email);
             ResultSet rs = stmt.executeQuery();
 
@@ -87,9 +91,10 @@ public class UserDB {
         }
         catch (SQLException SER){
             System.out.println(SER);
+            SER.printStackTrace();
         }
         catch (Exception er){
-
+            er.printStackTrace();
         }
         return null;
     }

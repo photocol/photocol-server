@@ -24,8 +24,8 @@ public class EndpointRequestModel {
 
         @Override
         public boolean isValid() {
-            // TODO: do validation
-            return true;
+            // TODO: improve validation
+            return this.username!=null && this.email!=null && this.passwordHash!=null;
         }
 
         @Override
@@ -41,8 +41,8 @@ public class EndpointRequestModel {
 
         @Override
         public boolean isValid() {
-            // TODO: do validation
-            return true;
+            // TODO: improve validation
+            return this.email!=null && this.passwordHash!=null;
         }
 
         @Override

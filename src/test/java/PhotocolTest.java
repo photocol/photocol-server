@@ -87,9 +87,23 @@ public class PhotocolTest extends TestCase {
         request("/image/cat.jpg", "GET");
 //        request("/login", "POST", "{\"email\":\"jlam@cooper.edu\"," +
 //                "\"passwordHash\":\"*&^%E(&%^$#*&%*(%($#^%&%*(&(TR*&$*&TU*&$%&^$^#\"}");
+        // create new user
+        request("/signup","Post"," {\"email\":\"whatever@gmail.com\"," + "\"passwordHash\":\"passowordpassword\"}");
+        //try to create user that already exists
+        request("/signup","Post"," {\"email\":\"victorzh716@gmail.com\"," + "\"passwordHash\":\"passowordpassword\"}");
+        //login with nonexisitng user
+        request("/login", "POST", "{\"email\":\"idontexist@gmail.com\"," + "\"passwordHash\":\"password\"}");
+        //login using wrong password
+        request("/login", "POST", "{\"email\":\"victorzh716@gmail.com\"," + "\"passwordHash\":\"notcorrectpassword\"}");
+        //login using exisitng user and right password
         request("/login", "POST", "{\"email\":\"victorzh716@gmail.com\"," + "\"passwordHash\":\"password\"}");
-
+        //login in again when logged in already
+        request("/login", "POST", "{\"email\":\"victorzh716@gmail.com\"," + "\"passwordHash\":\"password\"}");
+        //put photo in a collection that is not public
         request("/collection/new", "POST", "{\"name\":\"some collection\",\"isPublic\":false}");
+        //put photo in a collection that is public
+        request("/collection/new", "POST", "{\"name\":\"some collection\",\"isPublic\":true}");
+        //list all the photos in the collection
         request("/collection/collection1/photos", "GET");
 
         request("/userphotos", "GET");

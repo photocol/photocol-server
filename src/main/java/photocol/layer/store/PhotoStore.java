@@ -18,13 +18,13 @@ public class PhotoStore {
     private Connection conn;
     public PhotoStore() {
         // TODO: change this
-        this.conn = new InitDB().initialDB("PHOTO");
+        this.conn = new InitDB().initialDB("photocol");
     }
 
     // check if photo uri is taken; used when generating random photo uris
     public StatusResponse checkIfPhotoExists(String uri) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM PHOTO.ImageTB WHERE uri=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uri=?");
             stmt.setString(1, uri);
 
             ResultSet rs = stmt.executeQuery();
@@ -38,7 +38,7 @@ public class PhotoStore {
     // get all images that belong to a user
     public StatusResponse<List<Photo>> getUserPhotos(int uid) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM PHOTO.ImageTB WHERE uid=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photocol.photo WHERE uid=?");
             stmt.setInt(1, uid);
 
             ResultSet rs = stmt.executeQuery();
@@ -58,7 +58,7 @@ public class PhotoStore {
         try {
 
             // check if user owns the image
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri FROM PHOTO.ImageTB WHERE uid=? AND uri=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT uri FROM photocol.photo WHERE uid=? AND uri=?");
             stmt.setInt(1, uid);
             stmt.setString(2, uri);
             if(stmt.executeQuery().next())
@@ -67,11 +67,11 @@ public class PhotoStore {
             // check if user is in one of the collections that contains the image
             // TODO: check if this join is actually correct; not sure how to use joins
             // TODO: can probably simplify to one join if duplicate imageuri to icj table
-            stmt = conn.prepareStatement("SELECT PHOTO.ImageTB.pid " +
-                    "FROM PHOTO.ACL " +
-                    "INNER JOIN PHOTO.ICJ ON PHOTO.ACL.cid=PHOTO.ICJ.cid " +
-                    "INNER JOIN PHOTO.ImageTB ON PHOTO.ImageTB.pid=PHOTO.ICJ.pid " +
-                    "WHERE PHOTO.ACL.uid=? AND PHOTO.ImageTB.uri=?");
+            stmt = conn.prepareStatement("SELECT photocol.photo.pid " +
+                    "FROM photocol.acl " +
+                    "INNER JOIN photocol.icj ON photocol.acl.cid=photocol.icj.cid " +
+                    "INNER JOIN photocol.photo ON photocol.photo.pid=photocol.icj.pid " +
+                    "WHERE photocol.acl.uid=? AND photocol.photo.uri=?");
             stmt.setInt(1, uid);
             stmt.setString(2, uri);
 
@@ -88,7 +88,7 @@ public class PhotoStore {
     public StatusResponse createImage(String uri, String desc, int uid) {
         // assume uri is already checked to be unique in service layer
         try {
-            PreparedStatement stmt = conn.prepareStatement("INSERT INTO PHOTO.ImageTB (uri, upload_date, description, uid, orig_uid) VALUES(?,?,?,?,?)");
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO photocol.photo (uri, upload_date, description, uid, orig_uid) VALUES(?,?,?,?,?)");
             stmt.setString(1, uri);
             stmt.setDate(2, new Date(new java.util.Date().getTime()));
             stmt.setString(3, desc);

@@ -11,7 +11,7 @@ public class CollectionStore {
 
     private Connection conn;
     public CollectionStore() {
-        this.conn = new InitDB().initialDB("PHOTO");
+        this.conn = new InitDB().initialDB("photocol");
     }
 
     public void createCollection(User user, String name) { }

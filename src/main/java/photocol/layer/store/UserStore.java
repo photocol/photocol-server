@@ -22,7 +22,7 @@ public class UserStore {
     public StatusResponse<Integer> createUser(String email, String username, String password){
         try {
             PreparedStatement stmt =
-                    conn.prepareStatement("INSERT INTO PHOTO.USERTB (email, username, password) VALUES(?,?,?);",
+                    conn.prepareStatement("INSERT INTO photocol.user (email, username, password) VALUES(?,?,?);",
                                           Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, email);
             stmt.setString(2, username);
@@ -40,7 +40,7 @@ public class UserStore {
 
     public StatusResponse checkIfUserExists(String email) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM PHOTO.USERTB WHERE email=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM photocol.user WHERE email=?");
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
 
@@ -53,7 +53,7 @@ public class UserStore {
 
     public StatusResponse<Integer> checkCredentials(String email, String password) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uid, password FROM PHOTO.USERTB WHERE email=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid, password FROM photocol.user WHERE email=?");
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
 

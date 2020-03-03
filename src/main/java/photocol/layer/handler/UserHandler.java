@@ -80,7 +80,7 @@ public class UserHandler {
             return new StatusResponse(STATUS_NOT_LOGGED_IN);
 
         // TODO: remove; for debugging
-        System.out.printf("UID %d logged out.%n", req.session().attribute("uid"));
+        System.out.printf("UID %d logged out.%n", (int) req.session().attribute("uid"));
 
         req.session().invalidate();
         return new StatusResponse(STATUS_OK);

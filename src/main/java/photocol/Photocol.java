@@ -22,7 +22,8 @@ public class Photocol {
         S3ConnectionClient s3 = new S3ConnectionClient();
 
         // layers of handling
-        UserService userService = new UserService(new UserStore());
+        UserStore userStore = new UserStore();
+        UserService userService = new UserService(userStore);
         UserHandler userHandler = new UserHandler(userService, gson);
 
         CollectionStore collectionStore = new CollectionStore();

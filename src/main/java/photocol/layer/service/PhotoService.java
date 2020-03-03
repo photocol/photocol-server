@@ -37,7 +37,7 @@ public class PhotoService {
         String randUri;
         do {
             randUri = String.valueOf(Math.random()).substring(2);
-        } while(photoStore.checkIfPhotoExists(randUri).status()==STATUS_IMAGE_NOT_FOUND);
+        } while(photoStore.checkIfPhotoExists(randUri).status()!=STATUS_IMAGE_NOT_FOUND);
 
         StatusResponse status = s3.putObject(data, randUri+"."+ext);
         if(status.status() != STATUS_OK) {

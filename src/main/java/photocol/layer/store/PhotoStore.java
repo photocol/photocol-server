@@ -56,6 +56,7 @@ public class PhotoStore {
     // check to see if user owns photo or has access to a collection that contains the image
     public StatusResponse checkPhotoPermissions(String uri, int uid) {
         try {
+
             // check if user owns the image
             PreparedStatement stmt = conn.prepareStatement("SELECT uri FROM PHOTO.ImageTB WHERE uid=? AND uri=?");
             stmt.setInt(1, uid);
@@ -66,15 +67,16 @@ public class PhotoStore {
             // check if user is in one of the collections that contains the image
             // TODO: check if this join is actually correct; not sure how to use joins
             // TODO: can probably simplify to one join if duplicate imageuri to icj table
-            stmt = conn.prepareStatement("SELECT pid " +
+            stmt = conn.prepareStatement("SELECT PHOTO.ImageTB.pid " +
                     "FROM PHOTO.ACL " +
                     "INNER JOIN PHOTO.ICJ ON PHOTO.ACL.cid=PHOTO.ICJ.cid " +
-                    "INNER JOIN PHOTO.PhotoTB ON PHOTO.ACL.pid=PHOTO.ICJ.pid " +
-                    "WHERE PHOTO.ACL.uid=? AND PHOTO.PhotoTB.pid=?");
+                    "INNER JOIN PHOTO.ImageTB ON PHOTO.ImageTB.pid=PHOTO.ICJ.pid " +
+                    "WHERE PHOTO.ACL.uid=? AND PHOTO.ImageTB.uri=?");
             stmt.setInt(1, uid);
             stmt.setString(2, uri);
 
             ResultSet rs = stmt.executeQuery();
+
             return new StatusResponse(rs.next() ? STATUS_OK : STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
         } catch(Exception err) {
             err.printStackTrace();

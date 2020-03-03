@@ -31,7 +31,6 @@ public class EndpointRequestModel {
 
     // endpoint: POST /login
     public static class LoginRequest implements EndpointRequest<User> {
-        public String username;
         public String email;
         public String passwordHash;
 
@@ -43,7 +42,9 @@ public class EndpointRequestModel {
 
         @Override
         public User toServiceType() {
-            return new User(email, username, passwordHash);
+            return new User(email, passwordHash);
         }
     }
+
+    // endpoint:
 }

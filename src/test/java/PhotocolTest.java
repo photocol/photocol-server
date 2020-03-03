@@ -1,15 +1,16 @@
 import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.utils.URIUtils;
 import photocol.Photocol;
 import spark.Spark;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+
+import java.io.*;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PhotocolTest extends TestCase {
 
@@ -22,13 +23,17 @@ public class PhotocolTest extends TestCase {
     // for sending test requests to the webserver; helpful guide to managing HTTP requests from Java: (w/ cookies):
     // https://www.baeldung.com/java-http-request; this imitates a browser session by maintaining cookies
     private CookieManager cookieManager = new CookieManager();
-    private int request(String uri, String method, String data) throws Exception {
+    private int request(String uri, String method, String data, List<String[]> headers) throws Exception {
         String url = "http://localhost:" + Spark.port() + uri;
         System.out.printf("Testing %s request to %s with data \"%s\".%n", url, method, data);
-        HttpURLConnection con = (HttpURLConnection) new URL(url)
-                .openConnection();
+        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
         con.setRequestMethod(method);
         con.setRequestProperty("Cookie", StringUtils.join(cookieManager.getCookieStore().getCookies(), ";"));
+
+        // write all headers
+        for(String[] header : headers)
+            con.setRequestProperty(header[0], header[1]);
+
         if(method.equals("POST")) {
             con.setRequestProperty("Content-Type", "application/json");
             if(data.length()>0) {
@@ -37,12 +42,26 @@ public class PhotocolTest extends TestCase {
                 out.write(data);
                 out.close();
             }
+        } else if(method.equals("PUT")) {
+            con.setDoOutput(true);
+            InputStream in = new BufferedInputStream(new FileInputStream(data));
+            OutputStream out = new BufferedOutputStream(con.getOutputStream());
+            byte[] buffer = new byte[4096];
+            int n;
+            while((n = in.read(buffer))>-1)
+                out.write(buffer, 0, n);
+            in.close();
+            out.close();
+
+            System.err.println("GOT HERE");
         }
 
         // send request and get status
         int status = con.getResponseCode();
-        if(status != 200)
+        if(status!=200)
             return status;
+
+        System.err.println("GOT HERE2");
 
         // parse cookies
         String cookieString;
@@ -62,24 +81,24 @@ public class PhotocolTest extends TestCase {
         return status;
     }
     private int request(String uri, String method) throws Exception {
-        return request(uri, method, "");
+        return request(uri, method, "", new ArrayList<>());
+    }
+    private int request(String uri, String method, String data) throws Exception {
+        return request(uri, method, data, new ArrayList<>());
     }
 
     public void testPhotocol() throws Exception {
-//        // can run assertions here (e.g., check status code of requests)
-//        assertEquals(200, request("/login", "POST",
-//                "{\"username\":\"man\",\"passwordHash\":\"abcdef\"}"));
-//        assertEquals(200, request("/signup", "POST",
-//                "{\"username\":\"test\",\"passwordHash\":\"abcdef\"}"));
-//        assertEquals(200,request("/userdetails", "GET"));
-//        assertEquals(200, request("/login", "POST",
-//                "{\"username\":\"test\",\"passwordHash\":\"abcdef\"}"));
-//        assertEquals(200, request("/login", "POST",
-//                "{\"username\":\"test\",\"passwordHash\":\"abc\"}"));
-//        assertEquals(200, request("/logout", "GET"));
-//        assertEquals(200, request("/login", "POST",
-//                "{\"username\":\"test\",\"passwordHash\":\"abc\"}"));
-//        assertEquals(200,request("/userdetails", "GET"));
-//        assertEquals(404, request("/abc", "GET"));
+        request("/image/cat.jpg", "GET");
+        request("/login", "POST", "{\"email\":\"victorzh716@gmail.com\",\"passwordHash\":\"password\"}");
+        // this will print ugly stuff to terminal
+//        request("/image/cat.jpg", "GET");
+
+        // try this with your own image
+//        List<String[]> headers = new ArrayList<>();
+//        headers.add(new String[]{"Content-Type", "image/jpeg"});
+//        request("/image/test.png/upload", "PUT", "/home/jon/Downloads/cat2.jpg", headers);
+
+        request("/logout", "GET");
+        request("/image/cat.jpg", "GET");
     }
 }

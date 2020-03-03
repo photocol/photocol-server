@@ -34,13 +34,13 @@ public class PhotoHandler {
         Integer uid = req.session().attribute("uid");
         if(uid==null) {
             res.status(404);
-            return "";
+            return gson.toJson(new StatusResponse<>(STATUS_IMAGE_NOT_FOUND));
         }
 
         StatusResponse<ResponseInputStream<GetObjectResponse>> status;
         if((status=photoService.permalink(uri, uid)).status()!=STATUS_OK) {
             res.status(404);
-            return "";
+            return gson.toJson(new StatusResponse<>(STATUS_IMAGE_NOT_FOUND));
         }
 
         // caching with etags

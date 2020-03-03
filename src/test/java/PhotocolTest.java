@@ -52,16 +52,12 @@ public class PhotocolTest extends TestCase {
                 out.write(buffer, 0, n);
             in.close();
             out.close();
-
-            System.err.println("GOT HERE");
         }
 
         // send request and get status
         int status = con.getResponseCode();
         if(status!=200)
             return status;
-
-        System.err.println("GOT HERE2");
 
         // parse cookies
         String cookieString;

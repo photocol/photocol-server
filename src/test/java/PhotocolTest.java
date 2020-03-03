@@ -85,7 +85,13 @@ public class PhotocolTest extends TestCase {
 
     public void testPhotocol() throws Exception {
         request("/image/cat.jpg", "GET");
-        request("/login", "POST", "{\"email\":\"victorzh716@gmail.com\",\"passwordHash\":\"password\"}");
+//        request("/login", "POST", "{\"email\":\"jlam@cooper.edu\"," +
+//                "\"passwordHash\":\"*&^%E(&%^$#*&%*(%($#^%&%*(&(TR*&$*&TU*&$%&^$^#\"}");
+        request("/login", "POST", "{\"email\":\"victorzh716@gmail.com\"," + "\"passwordHash\":\"password\"}");
+
+        request("/collection/new", "POST", "{\"name\":\"some collection\",\"isPublic\":false}");
+        request("/collection/collection1/photos", "GET");
+
         // this will print ugly stuff to terminal
 //        request("/image/cat.jpg", "GET");
 

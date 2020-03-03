@@ -19,17 +19,17 @@ public class CollectionService {
     // create collection: passthrough
     public StatusResponse createCollection(int uid, PhotoCollection collection) {
         // make sure collection name is unique
-        if(collectionStore.checkIfCollectionExists(uid, collection.name).status()==STATUS_OK)
+        if(collectionStore.checkIfCollectionExists(uid, collection.uri()).status()==STATUS_OK)
             return new StatusResponse<>(STATUS_COLLECTION_NAME_NOT_UNIQUE);
 
         return collectionStore.createCollection(uid, collection);
     }
 
     // list items in collection
-    public StatusResponse<List<Photo>> getCollection(int uid, String collectionName) {
+    public StatusResponse<List<Photo>> getCollection(int uid, String collectionUri) {
         // make sure collection exists
         StatusResponse<Integer> status;
-        if((status=collectionStore.checkIfCollectionExists(uid, collectionName)).status()!=STATUS_OK)
+        if((status=collectionStore.checkIfCollectionExists(uid, collectionUri)).status()!=STATUS_OK)
             return new StatusResponse<>(status.status());
         int cid = status.payload();
 

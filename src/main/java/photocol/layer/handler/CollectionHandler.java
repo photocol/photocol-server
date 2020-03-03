@@ -1,9 +1,11 @@
 package photocol.layer.handler;
 
 import com.google.gson.Gson;
-import static photocol.definitions.request.EndpointRequestModel.NewCollectionRequest;
+import static photocol.definitions.request.EndpointRequestModel.*;
 
+import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
+import photocol.definitions.request.EndpointRequestModel;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.service.CollectionService;
 import spark.Request;
@@ -27,7 +29,7 @@ public class CollectionHandler {
         res.type("application/json");
 
         // make sure logged in
-        Integer uid = req.session().attribute("user");
+        Integer uid = req.session().attribute("uid");
         if(uid==null)
             return new StatusResponse(STATUS_NOT_LOGGED_IN);
 
@@ -40,22 +42,45 @@ public class CollectionHandler {
         return collectionService.createCollection(uid, collection.toServiceType());
     }
 
+    // update a collection
+    public StatusResponse updateCollection(Request req, Response res) {
+        res.type("application/json");
+
+        // make sure logged in
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            return new StatusResponse(STATUS_NOT_LOGGED_IN);
+
+        UpdateCollectionRequest collectionRequest = gson.fromJson(req.body(), UpdateCollectionRequest.class);
+        if(collectionRequest==null || !collectionRequest.isValid()) {
+            res.status(400);
+            return new StatusResponse(STATUS_HTTP_ERROR);
+        }
+
+        for(ACLEntry aclEntry : collectionRequest.aclList) {
+            System.out.println(aclEntry.email + " " + aclEntry.role);
+        }
+
+        // TODO: working here
+        return null;
+    }
+
     // list images in a collection
     public StatusResponse<List<Photo>> getCollection(Request req, Response res) {
         res.type("application/json");
 
         // make sure logged in
-        Integer uid = req.session().attribute("user");
+        Integer uid = req.session().attribute("uid");
         if(uid==null)
             return new StatusResponse<>(STATUS_NOT_LOGGED_IN);
 
-        String collectionName = req.params("collectionname");
-        if(collectionName==null) {
+        String collectionUri = req.params("collectionuri");
+        if(collectionUri==null) {
             res.status(400);
             return new StatusResponse<>(STATUS_HTTP_ERROR);
         }
 
-        return collectionService.getCollection(uid, collectionName);
+        return collectionService.getCollection(uid, collectionUri);
     }
 
 }

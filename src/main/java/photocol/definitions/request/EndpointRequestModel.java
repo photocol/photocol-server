@@ -1,7 +1,11 @@
 package photocol.definitions.request;
 
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
+import photocol.definitions.ACLEntry;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.User;
+
+import java.util.List;
 
 // define schemas for all endpoint api input request with JSON data
 public class EndpointRequestModel {
@@ -47,7 +51,7 @@ public class EndpointRequestModel {
         }
     }
 
-    // endpoint: POST /collection/new
+    // endpoint: POST /collection/:collectionname/new
     public static class NewCollectionRequest implements EndpointRequest<PhotoCollection> {
 
         public boolean isPublic;
@@ -61,6 +65,23 @@ public class EndpointRequestModel {
         @Override
         public PhotoCollection toServiceType() {
             return new PhotoCollection(isPublic, name);
+        }
+    }
+
+    // endpoint: POST /collection/:collectionname/update
+    public static class UpdateCollectionRequest implements EndpointRequest<PhotoCollection> {
+        public boolean isPublic;
+        public String name;
+        public List<ACLEntry> aclList;
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public PhotoCollection toServiceType() {
+            return new PhotoCollection(isPublic, name, aclList);
         }
     }
 }

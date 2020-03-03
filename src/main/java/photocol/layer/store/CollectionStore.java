@@ -52,8 +52,6 @@ public class CollectionStore {
             stmt.setInt(1, uid);
             stmt.setString(2, collectionUri);
 
-            System.err.println(stmt.toString());
-
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
                 return new StatusResponse<>(STATUS_COLLECTION_NOT_FOUND);
@@ -128,5 +126,11 @@ public class CollectionStore {
             err.printStackTrace();
             return new StatusResponse<>(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
         }
+    }
+
+    // add photo to collection
+    public StatusResponse addImage(int uid, int cid, String uri) {
+        // TODO: working here
+        return null;
     }
 }

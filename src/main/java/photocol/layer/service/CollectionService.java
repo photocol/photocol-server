@@ -1,5 +1,6 @@
 package photocol.layer.service;
 
+import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.response.StatusResponse;
@@ -44,5 +45,26 @@ public class CollectionService {
 
         // get list of images in collection
         return collectionStore.getCollectionPhotos(cid);
+    }
+
+    // add image to collection
+    public StatusResponse addImage(int uid, String collectionUri, String imageuri) {
+        // get cid of collection, make sure it exists
+        StatusResponse<Integer> status;
+        if((status=collectionStore.checkIfCollectionExists(uid, collectionUri)).status()!=STATUS_OK)
+            return status;
+        int cid = status.payload();
+
+        // get user role in collection
+        if((status=collectionStore.getUserCollectionRole(uid, cid)).status()!=STATUS_OK)
+            return status;
+
+        // checking edit permissions
+        ACLEntry.Role role = ACLEntry.Role.fromInt(status.payload());
+        if(role!= ACLEntry.Role.ROLE_OWNER && role!= ACLEntry.Role.ROLE_EDITOR)
+            return new StatusResponse(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
+
+        // TODO: working here
+        return null;
     }
 }

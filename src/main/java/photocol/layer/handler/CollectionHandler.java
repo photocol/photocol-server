@@ -6,7 +6,6 @@ import static photocol.definitions.request.EndpointRequestModel.*;
 import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
-import photocol.definitions.request.EndpointRequestModel;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.service.CollectionService;
 import spark.Request;
@@ -96,6 +95,31 @@ public class CollectionHandler {
         }
 
         return collectionService.getCollection(uid, collectionUri);
+    }
+
+    // add image to collection
+    public StatusResponse addImage(Request req, Response res) {
+        res.type("application/json");
+
+        // make sure logged in
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            return new StatusResponse(STATUS_NOT_LOGGED_IN);
+
+        String collectionUri = req.params("collectionuri");
+        if(collectionUri==null) {
+            res.status(400);
+            return new StatusResponse(STATUS_HTTP_ERROR);
+        }
+
+        AddImageRequest addRequest = gson.fromJson(req.body(), AddImageRequest.class);
+        if(addRequest==null || !addRequest.isValid()) {
+            res.status(400);
+            return new StatusResponse(STATUS_HTTP_ERROR);
+        }
+
+        String imageUri = addRequest.toServiceType();
+        return collectionService.addImage(uid, collectionUri, imageUri);
     }
 
 }

@@ -8,7 +8,7 @@ public class ACLEntry {
     // for use when converting from db
     public ACLEntry(String email, int role) {
         this.email = email;
-        this.role = Role.fromRole(role);
+        this.role = Role.fromInt(role);
     }
 
     public enum Role {
@@ -23,7 +23,7 @@ public class ACLEntry {
         public int toInt() {
             return roleInt;
         }
-        public static Role fromRole(int roleInt) {
+        public static Role fromInt(int roleInt) {
             switch (roleInt) {
                 case 0: return ROLE_OWNER;
                 case 1: return ROLE_VIEWER;

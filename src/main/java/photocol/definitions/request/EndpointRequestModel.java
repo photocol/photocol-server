@@ -24,8 +24,8 @@ public class EndpointRequestModel {
 
         @Override
         public boolean isValid() {
-            // TODO: do validation
-            return true;
+            // TODO: improve validation
+            return this.username!=null && this.email!=null && this.passwordHash!=null;
         }
 
         @Override
@@ -41,8 +41,8 @@ public class EndpointRequestModel {
 
         @Override
         public boolean isValid() {
-            // TODO: do validation
-            return true;
+            // TODO: improve validation
+            return this.email!=null && this.passwordHash!=null;
         }
 
         @Override
@@ -82,6 +82,21 @@ public class EndpointRequestModel {
         @Override
         public PhotoCollection toServiceType() {
             return new PhotoCollection(isPublic, name, aclList);
+        }
+    }
+
+    // endpoint: POST /collection/:collectioname/addimage
+    public static class AddImageRequest implements EndpointRequest<String> {
+        public String uri;
+
+        @Override
+        public boolean isValid() {
+            return uri!=null;
+        }
+
+        @Override
+        public String toServiceType() {
+            return uri;
         }
     }
 }

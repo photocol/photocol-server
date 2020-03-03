@@ -5,6 +5,12 @@ public class ACLEntry {
     public String email;
     public Role role;
 
+    // for use when converting from db
+    public ACLEntry(String email, int role) {
+        this.email = email;
+        this.role = Role.fromRole(role);
+    }
+
     public enum Role {
         ROLE_OWNER(0),
         ROLE_VIEWER(1),

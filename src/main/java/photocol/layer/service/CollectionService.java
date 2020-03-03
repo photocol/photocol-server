@@ -16,10 +16,15 @@ public class CollectionService {
         this.collectionStore = collectionStore;
     }
 
+    // list collections that user has access to: passthrough
+    public StatusResponse<List<PhotoCollection>> getUserCollections(int uid) {
+        return collectionStore.getUserCollections(uid);
+    }
+
     // create collection: passthrough
     public StatusResponse createCollection(int uid, PhotoCollection collection) {
         // make sure collection name is unique
-        if(collectionStore.checkIfCollectionExists(uid, collection.uri()).status()==STATUS_OK)
+        if(collectionStore.checkIfCollectionExists(uid, collection.uri).status()==STATUS_OK)
             return new StatusResponse<>(STATUS_COLLECTION_NAME_NOT_UNIQUE);
 
         return collectionStore.createCollection(uid, collection);
@@ -38,6 +43,6 @@ public class CollectionService {
             return new StatusResponse<>(status.status());
 
         // get list of images in collection
-        return collectionStore.getCollectionPhotos(uid, cid);
+        return collectionStore.getCollectionPhotos(cid);
     }
 }

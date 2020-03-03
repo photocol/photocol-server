@@ -5,6 +5,7 @@ import static photocol.definitions.request.EndpointRequestModel.*;
 
 import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
+import photocol.definitions.PhotoCollection;
 import photocol.definitions.request.EndpointRequestModel;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.service.CollectionService;
@@ -24,6 +25,18 @@ public class CollectionHandler {
         this.gson = gson;
     }
 
+    // list the current user's collections
+    public StatusResponse getUserCollections(Request req, Response res) {
+        res.type("application/json");
+
+        // make sure logged in
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            return new StatusResponse(STATUS_NOT_LOGGED_IN);
+
+        return collectionService.getUserCollections(uid);
+    }
+
     // create a collection
     public StatusResponse createCollection(Request req, Response res) {
         res.type("application/json");
@@ -39,7 +52,9 @@ public class CollectionHandler {
             return new StatusResponse(STATUS_HTTP_ERROR);
         }
 
-        return collectionService.createCollection(uid, collection.toServiceType());
+        PhotoCollection photoCollection = collection.toServiceType();
+        photoCollection.generateUri();
+        return collectionService.createCollection(uid, photoCollection);
     }
 
     // update a collection

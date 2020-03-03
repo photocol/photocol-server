@@ -92,6 +92,9 @@ public class PhotocolTest extends TestCase {
         request("/collection/new", "POST", "{\"name\":\"some collection\",\"isPublic\":false}");
         request("/collection/collection1/photos", "GET");
 
+        request("/userphotos", "GET");
+        request("/usercollections", "GET");
+
         // this will print ugly stuff to terminal
 //        request("/image/cat.jpg", "GET");
 

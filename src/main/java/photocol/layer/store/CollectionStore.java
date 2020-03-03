@@ -21,6 +21,29 @@ public class CollectionStore {
         this.conn = new InitDB().initialDB("photocol");
     }
 
+    // get all collections that user has permissions to
+    public StatusResponse<List<PhotoCollection>> getUserCollections(int uid) {
+        try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT pub, name, uri, role FROM collection " +
+                    "INNER JOIN acl ON collection.cid=acl.cid " +
+                    "WHERE acl.uid=?");
+            stmt.setInt(1, uid);
+
+            ResultSet rs = stmt.executeQuery();
+            List<PhotoCollection> photoCollections = new ArrayList<>();
+            while(rs.next()) {
+                // here, aclList just indicates the current user's role
+                List<ACLEntry> aclList = new ArrayList<>();
+                aclList.add(new ACLEntry("current user", rs.getInt("role")));
+                photoCollections.add(new PhotoCollection(rs.getBoolean("pub"), rs.getString("name"), aclList));
+            }
+            return new StatusResponse<>(STATUS_OK, photoCollections);
+        } catch(Exception err) {
+            err.printStackTrace();
+            return new StatusResponse<>(STATUS_MISC);
+        }
+    }
+
     // check if collection exists and return cid if it does; actually checks uri, not name
     public StatusResponse<Integer> checkIfCollectionExists(int uid, String collectionUri) {
         try {
@@ -42,13 +65,14 @@ public class CollectionStore {
         }
     }
 
+    // insert collection into db
     public StatusResponse createCollection(int uid, PhotoCollection collection) {
         try {
             PreparedStatement stmt1 = conn.prepareStatement("INSERT INTO collection (name, pub, uri) VALUES (?, ?, ?);",
                     Statement.RETURN_GENERATED_KEYS);
             stmt1.setString(1, collection.name);
             stmt1.setBoolean(2, collection.isPublic);
-            stmt1.setString(3, collection.uri());
+            stmt1.setString(3, collection.uri);
             stmt1.executeUpdate();
 
             ResultSet keyResultSet = stmt1.getGeneratedKeys();
@@ -69,7 +93,8 @@ public class CollectionStore {
         }
     }
 
-    public StatusResponse<List<Photo>> getCollectionPhotos(int uid, int cid) {
+    // get photos in collection
+    public StatusResponse<List<Photo>> getCollectionPhotos(int cid) {
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photo " +
                     "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.cid=?");

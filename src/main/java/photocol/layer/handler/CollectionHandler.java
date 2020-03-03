@@ -21,7 +21,6 @@ public class CollectionHandler {
         res.type("application/json");
 
         // make sure logged in
-        // TODO: make helper to do this
         Integer uid = req.session().attribute("user");
         if(uid==null)
             return new StatusResponse(STATUS_NOT_LOGGED_IN);

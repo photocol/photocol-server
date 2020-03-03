@@ -1,5 +1,6 @@
 package photocol.definitions.request;
 
+import photocol.definitions.PhotoCollection;
 import photocol.definitions.User;
 
 // define schemas for all endpoint api input request with JSON data
@@ -46,5 +47,20 @@ public class EndpointRequestModel {
         }
     }
 
-    // endpoint:
+    // endpoint: POST /collection/new
+    public static class NewCollectionRequest implements EndpointRequest<PhotoCollection> {
+
+        public boolean isPublic;
+        public String name;
+
+        @Override
+        public boolean isValid() {
+            return name!=null;
+        }
+
+        @Override
+        public PhotoCollection toServiceType() {
+            return new PhotoCollection(isPublic, name);
+        }
+    }
 }

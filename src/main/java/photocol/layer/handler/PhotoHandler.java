@@ -26,7 +26,6 @@ public class PhotoHandler {
     }
 
     // simple image passthrough from s3
-    // todo: move this to service layer, add authentication
     public Object permalink(Request req, Response res) {
         String uri = req.params("imageuri");
         String conditionalHeader = req.headers("If-None-Match");

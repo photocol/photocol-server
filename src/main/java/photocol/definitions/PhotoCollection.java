@@ -12,17 +12,20 @@ public class PhotoCollection {
     public PhotoCollection(boolean isPublic, String name) {
         this.isPublic = isPublic;
         this.name = name;
+        this.generateUri();
     }
     public PhotoCollection(boolean isPublic, String name, List<ACLEntry> aclList) {
         this.isPublic = isPublic;
         this.name = name;
         this.aclList = aclList;
+        this.generateUri();
     }
     public PhotoCollection(boolean isPublic, String name, String uri, List<ACLEntry> aclList) {
         this.isPublic = isPublic;
         this.name = name;
         this.uri = uri;
         this.aclList = aclList;
+        this.generateUri();
     }
 
     // generate URI from name

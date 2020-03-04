@@ -1,6 +1,5 @@
 package photocol.definitions.request;
 
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
 import photocol.definitions.ACLEntry;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.User;
@@ -36,18 +35,18 @@ public class EndpointRequestModel {
 
     // endpoint: POST /login
     public static class LoginRequest implements EndpointRequest<User> {
-        public String email;
+        public String username;
         public String passwordHash;
 
         @Override
         public boolean isValid() {
             // TODO: improve validation
-            return this.email!=null && this.passwordHash!=null;
+            return this.username!=null && this.passwordHash!=null;
         }
 
         @Override
         public User toServiceType() {
-            return new User(email, passwordHash);
+            return new User(username, passwordHash);
         }
     }
 

@@ -3,7 +3,6 @@ package photocol.layer.handler;
 import com.google.gson.Gson;
 import static photocol.definitions.request.EndpointRequestModel.*;
 
-import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.response.StatusResponse;
@@ -51,9 +50,7 @@ public class CollectionHandler {
             return new StatusResponse(STATUS_HTTP_ERROR);
         }
 
-        PhotoCollection photoCollection = collection.toServiceType();
-        photoCollection.generateUri();
-        return collectionService.createCollection(uid, photoCollection);
+        return collectionService.createCollection(uid, collection.toServiceType());
     }
 
     // update a collection
@@ -71,12 +68,13 @@ public class CollectionHandler {
             return new StatusResponse(STATUS_HTTP_ERROR);
         }
 
-        for(ACLEntry aclEntry : collectionRequest.aclList) {
-            System.out.println(aclEntry.email + " " + aclEntry.role);
+        String collectionUri = req.params("collectionuri");
+        if(collectionUri==null) {
+            res.status(400);
+            return new StatusResponse(STATUS_HTTP_ERROR);
         }
 
-        // TODO: working here
-        return null;
+        return collectionService.update(uid, collectionUri, collectionRequest.toServiceType());
     }
 
     // list images in a collection

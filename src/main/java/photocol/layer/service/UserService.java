@@ -15,15 +15,15 @@ public class UserService {
     }
 
     public StatusResponse<Integer> signUp(User user) {
-        if (userStore.checkIfUserExists(user.email).status() == STATUS_USER_NOT_FOUND)
+        if (userStore.checkIfUserExists(user.username).status() == STATUS_USER_NOT_FOUND)
             return userStore.createUser(user.email, user.username, user.passwordHash);
         return new StatusResponse<>(STATUS_CREDENTIALS_NOT_UNIQUE);
     }
 
     public StatusResponse<Integer> logIn(User user) {
-        if(userStore.checkIfUserExists(user.email).status() == STATUS_USER_NOT_FOUND)
+        if(userStore.checkIfUserExists(user.username).status() == STATUS_USER_NOT_FOUND)
             return new StatusResponse<>(STATUS_USER_NOT_FOUND);
-        return userStore.checkCredentials(user.email, user.passwordHash);
+        return userStore.checkCredentials(user.username, user.passwordHash);
     }
 
 }

@@ -143,4 +143,50 @@ public class CollectionStore {
             return new StatusResponse(STATUS_MISC);
         }
     }
+
+    // update collection
+    public StatusResponse update(int cid, PhotoCollection photoCollection) {
+        try {
+            // update name and uri
+            if (photoCollection.name != null && photoCollection.name.length() > 0) {
+                PreparedStatement stmt = conn.prepareStatement("UPDATE collection SET name=?, uri=? WHERE cid=?");
+                stmt.setString(1, photoCollection.name);
+                stmt.setString(2, photoCollection.uri);
+                stmt.setInt(3, cid);
+                stmt.executeUpdate();
+            }
+
+            // update acl list; do all as one callback
+            if (photoCollection.aclList.size() > 0) {
+                conn.setAutoCommit(false);
+
+                for (ACLEntry entry : photoCollection.aclList) {
+                    PreparedStatement stmt;
+                    if (entry.role != ACLEntry.Role.ROLE_NONE) {
+                        stmt = conn.prepareStatement("INSERT INTO acl (cid, uid, role) VALUES (?, ?, ?)");
+                        stmt.setInt(1, cid);
+                        stmt.setInt(2, entry.uid);
+                        stmt.setInt(3, entry.role.toInt());
+                    } else {
+                        stmt = conn.prepareStatement("REMOVE FROM acl WHERE cid=? AND uid=?");
+                        stmt.setInt(1, cid);
+                        stmt.setInt(2, entry.uid);
+                    }
+                    stmt.executeUpdate();
+                }
+
+                conn.commit();
+                conn.setAutoCommit(true);
+            }
+
+            return new StatusResponse(STATUS_OK);
+        } catch(SQLIntegrityConstraintViolationException err) {
+            // if try to insert duplicate acl records for same db; this will be eliminated when stricter checks
+            // on ACL list on service layer are implemented
+            return new StatusResponse(STATUS_MISC);
+        } catch(Exception err) {
+            err.printStackTrace();
+            return new StatusResponse(STATUS_MISC);
+        }
+    }
 }

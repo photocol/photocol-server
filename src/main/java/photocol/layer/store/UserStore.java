@@ -1,7 +1,6 @@
 package photocol.layer.store;
 
 import photocol.definitions.response.StatusResponse;
-import photocol.definitions.response.StatusResponse.Status;
 import photocol.layer.DataBase.Method.InitDB;
 import photocol.layer.DataBase.Method.TableManage;
 
@@ -10,19 +9,15 @@ import java.sql.*;
 import static photocol.definitions.response.StatusResponse.Status.*;
 
 public class UserStore {
-    InitDB UDb = null;
     Connection conn = null;
-    TableManage ureg = null;
     public UserStore(){
-        UDb = new InitDB();
-        conn = UDb.initialDB("USR");
-        ureg = new TableManage(conn);
+        conn = new InitDB().initialDB("photocol");
     }
 
     public StatusResponse<Integer> createUser(String email, String username, String password){
         try {
             PreparedStatement stmt =
-                    conn.prepareStatement("INSERT INTO photocol.user (email, username, password) VALUES(?,?,?);",
+                    conn.prepareStatement("INSERT INTO user (email, username, password) VALUES(?,?,?);",
                                           Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, email);
             stmt.setString(2, username);
@@ -38,10 +33,10 @@ public class UserStore {
         }
     }
 
-    public StatusResponse checkIfUserExists(String email) {
+    public StatusResponse checkIfUserExists(String username) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM photocol.user WHERE email=?");
-            stmt.setString(1, email);
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM user WHERE username=?");
+            stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
 
             return new StatusResponse(rs.next() ? STATUS_OK : STATUS_USER_NOT_FOUND);
@@ -51,10 +46,10 @@ public class UserStore {
         }
     }
 
-    public StatusResponse<Integer> checkCredentials(String email, String password) {
+    public StatusResponse<Integer> checkCredentials(String username, String password) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uid, password FROM photocol.user WHERE email=?");
-            stmt.setString(1, email);
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid, password FROM user WHERE username=?");
+            stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
 
             // TODO: implement more advanced check w/ one-way hashing
@@ -66,6 +61,22 @@ public class UserStore {
         } catch(Exception err) {
             err.printStackTrace();
             return new StatusResponse<>(STATUS_CREDENTIALS_INVALID);
+        }
+    }
+
+    public StatusResponse<Integer> getUid(String username) {
+        try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM user WHERE username=?");
+            stmt.setString(1, username);
+
+            ResultSet rs = stmt.executeQuery();
+            if(!rs.next())
+                return new StatusResponse<>(STATUS_USER_NOT_FOUND);
+
+            return new StatusResponse<>(STATUS_OK, rs.getInt("uid"));
+        } catch(Exception err) {
+            err.printStackTrace();
+            return new StatusResponse<>(STATUS_USER_NOT_FOUND);
         }
     }
 

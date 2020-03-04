@@ -11,10 +11,8 @@ public class User {
         this.passwordHash = passwordHash;
     }
     // on login, no username is specified
-    public User(String email, String passwordHash) {
-        this.email = email;
-        // TODO: is it necessary to get username?
-        this.username = null;
+    public User(String username, String passwordHash) {
+        this.username = username;
         this.passwordHash = passwordHash;
     }
 

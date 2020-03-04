@@ -6,6 +6,7 @@ import photocol.definitions.PhotoCollection;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
+import photocol.layer.store.UserStore;
 
 import java.util.List;
 
@@ -15,9 +16,11 @@ public class CollectionService {
 
     private CollectionStore collectionStore;
     private PhotoStore photoStore;
-    public CollectionService(CollectionStore collectionStore, PhotoStore photoStore){
+    private UserStore userStore;
+    public CollectionService(CollectionStore collectionStore, PhotoStore photoStore, UserStore userStore) {
         this.collectionStore = collectionStore;
         this.photoStore = photoStore;
+        this.userStore = userStore;
     }
 
     // list collections that user has access to: passthrough
@@ -75,5 +78,40 @@ public class CollectionService {
         // add image to collection
         int pid = status.payload();
         return collectionStore.addImage(cid, pid);
+    }
+
+    // update collection
+    public StatusResponse update(int uid, String collectionUri, PhotoCollection photoCollection) {
+        // these first three stages are exactly the same as above -- make more DRY by putting in separate service fn
+        StatusResponse<Integer> status;
+        if((status=collectionStore.checkIfCollectionExists(uid, collectionUri)).status()!=STATUS_OK)
+            return status;
+        int cid = status.payload();
+
+        // make sure new uri is unique for the current user, if applicable
+        if(photoCollection.name!=null)
+            if((status=collectionStore.checkIfCollectionExists(uid, photoCollection.uri)).status()==STATUS_OK)
+                return new StatusResponse(STATUS_COLLECTION_NAME_NOT_UNIQUE);
+
+        // get user role in collection
+        if((status=collectionStore.getUserCollectionRole(uid, cid)).status()!=STATUS_OK)
+            return status;
+
+        // checking edit permissions
+        ACLEntry.Role role = ACLEntry.Role.fromInt(status.payload());
+        if(role != ACLEntry.Role.ROLE_OWNER)
+            return new StatusResponse(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
+
+        // TODO: enforce strict checks on ACL list
+
+        // get list of uids from usernames
+        for(ACLEntry entry : photoCollection.aclList) {
+             if((status=userStore.getUid(entry.username)).status()!=STATUS_OK)
+                 return new StatusResponse(STATUS_USER_NOT_FOUND);
+             entry.setUid(status.payload());
+        }
+
+        // update collection with parameters
+        return update(uid, collectionUri, photoCollection);
     }
 }

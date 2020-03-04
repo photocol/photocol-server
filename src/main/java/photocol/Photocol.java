@@ -27,7 +27,7 @@ public class Photocol {
         PhotoStore photoStore = new PhotoStore();
 
         UserService userService = new UserService(userStore);
-        CollectionService collectionService = new CollectionService(collectionStore, photoStore);
+        CollectionService collectionService = new CollectionService(collectionStore, photoStore, userStore);
         PhotoService photoService = new PhotoService(photoStore, s3);
 
         UserHandler userHandler = new UserHandler(userService, gson);

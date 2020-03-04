@@ -28,7 +28,7 @@ public class PhotoService {
         if(contentType==null)
             return new StatusResponse<>(STATUS_IMAGE_MIMETYPE_INVALID);
         switch(contentType) {
-            case "image/jpeg": ext = "jpg"; break;
+            case "image/jpg": case "image/jpeg": ext = "jpg"; break;
             case "image/gif": ext = "gif"; break;
             case "image/png": ext = "png"; break;
             default:

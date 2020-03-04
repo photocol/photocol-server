@@ -37,6 +37,4 @@ public class Photocol {
         // init handlers (highest layer) at all endpoints
         new Endpoints(userHandler, collectionHandler, photoHandler, gson);
     }
-
-    }
 }

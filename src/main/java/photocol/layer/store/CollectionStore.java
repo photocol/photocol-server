@@ -51,7 +51,7 @@ public class CollectionStore {
 //            stmt.setInt(2, 0);
 //            stmt.setString(3, collectionUri);
 
-            PreparedStatement stmt = conn.prepareStatement("SELECT cid, uid FROM collection " +
+            PreparedStatement stmt = conn.prepareStatement("SELECT collection.cid, uid FROM collection " +
                     "INNER JOIN acl ON collection.cid=acl.cid " +
                     "WHERE ((uid=? and role=?) or uid=?) AND collection.uri=?");
             stmt.setInt(1, collectionOwnerUid);

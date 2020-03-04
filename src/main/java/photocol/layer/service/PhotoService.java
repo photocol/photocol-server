@@ -25,6 +25,8 @@ public class PhotoService {
         // for a more exhaustive list, see: https://www.iana.org/assignments/media-types/media-types.xhtml#image
         // for now, only common ones allowed
         String ext;
+        if(contentType==null)
+            return new StatusResponse<>(STATUS_IMAGE_MIMETYPE_INVALID);
         switch(contentType) {
             case "image/jpeg": ext = "jpg"; break;
             case "image/gif": ext = "gif"; break;

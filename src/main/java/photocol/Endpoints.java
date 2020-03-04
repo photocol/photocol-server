@@ -28,9 +28,9 @@ public class Endpoints {
 
         Spark.get("/usercollections", collectionHandler::getUserCollections, gson::toJson);
         Spark.post("/collection/new", collectionHandler::createCollection, gson::toJson);
+        Spark.get("/collection/:username/:collectionuri", collectionHandler::getCollection, gson::toJson);
         Spark.post("/collection/:username/:collectionuri/update", collectionHandler::updateCollection, gson::toJson);
         Spark.post("/collection/:username/:collectionuri/addphoto", collectionHandler::addPhoto, gson::toJson);
-        Spark.get("/collection/:username/:collectionuri/photos", collectionHandler::getCollection, gson::toJson);
     }
 
     // for testing only; will throw an exception if called

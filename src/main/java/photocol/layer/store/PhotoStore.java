@@ -102,7 +102,7 @@ public class PhotoStore {
             if(stmt.executeUpdate()<1)
                 return new StatusResponse(STATUS_MISC);
 
-            return new StatusResponse(STATUS_OK);
+            return new StatusResponse(STATUS_OK, uri);
         } catch(Exception err) {
             err.printStackTrace();
             // TODO: add more fitting status name

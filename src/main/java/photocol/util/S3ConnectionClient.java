@@ -43,7 +43,7 @@ public class S3ConnectionClient {
         try {
             s3.putObject(PutObjectRequest.builder().bucket(bucket).key(uri).build(),
                     RequestBody.fromBytes(data));
-            return new StatusResponse(STATUS_OK);
+            return new StatusResponse(STATUS_OK, uri);
         } catch(S3Exception exception) {
             exception.printStackTrace();
             // TODO: use more descriptive status

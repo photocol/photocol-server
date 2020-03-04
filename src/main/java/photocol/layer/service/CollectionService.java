@@ -31,17 +31,23 @@ public class CollectionService {
     // create collection: passthrough
     public StatusResponse createCollection(int uid, PhotoCollection collection) {
         // make sure collection name is unique
-        if(collectionStore.checkIfCollectionExists(uid, collection.uri).status()==STATUS_OK)
+        if(collectionStore.checkIfCollectionExists(uid, uid, collection.uri).status()==STATUS_OK)
             return new StatusResponse<>(STATUS_COLLECTION_NAME_NOT_UNIQUE);
 
         return collectionStore.createCollection(uid, collection);
     }
 
     // list items in collection
-    public StatusResponse<List<Photo>> getCollection(int uid, String collectionUri) {
-        // make sure collection exists
+    public StatusResponse<List<Photo>> getCollection(int uid, String collectionUri, String collectionOwner) {
         StatusResponse<Integer> status;
-        if((status=collectionStore.checkIfCollectionExists(uid, collectionUri)).status()!=STATUS_OK)
+
+        // get uid
+        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
+            return new StatusResponse<>(status.status());
+        int collectionOwnerUid = status.payload();
+
+        // make sure collection exists
+        if((status=collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, collectionUri)).status()!=STATUS_OK)
             return new StatusResponse<>(status.status());
         int cid = status.payload();
 
@@ -54,11 +60,15 @@ public class CollectionService {
     }
 
     // add image to collection
-    public StatusResponse addImage(int uid, String collectionUri, String imageuri) {
+    public StatusResponse addPhoto(int uid, String collectionUri, String collectionOwner, String imageuri) {
+        StatusResponse<Integer> status;
+        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
+            return status;
+        int collectionOwnerUid = status.payload();
+
         // TODO: get cid and user role in collection in one query to reduce number of queries
         // get cid of collection, make sure it exists
-        StatusResponse<Integer> status;
-        if((status=collectionStore.checkIfCollectionExists(uid, collectionUri)).status()!=STATUS_OK)
+        if((status=collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, collectionUri)).status()!=STATUS_OK)
             return status;
         int cid = status.payload();
 
@@ -81,16 +91,20 @@ public class CollectionService {
     }
 
     // update collection
-    public StatusResponse update(int uid, String collectionUri, PhotoCollection photoCollection) {
-        // these first three stages are exactly the same as above -- make more DRY by putting in separate service fn
+    public StatusResponse update(int uid, String collectionUri, String collectionOwner, PhotoCollection photoCollection) {
         StatusResponse<Integer> status;
-        if((status=collectionStore.checkIfCollectionExists(uid, collectionUri)).status()!=STATUS_OK)
+        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
+            return status;
+        int collectionOwnerUid = status.payload();
+
+        // these first three stages are exactly the same as above -- make more DRY by putting in separate service fn
+        if((status=collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, collectionUri)).status()!=STATUS_OK)
             return status;
         int cid = status.payload();
 
         // make sure new uri is unique for the current user, if applicable
         if(photoCollection.name!=null)
-            if((status=collectionStore.checkIfCollectionExists(uid, photoCollection.uri)).status()==STATUS_OK)
+            if((status=collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, photoCollection.uri)).status()==STATUS_OK)
                 return new StatusResponse(STATUS_COLLECTION_NAME_NOT_UNIQUE);
 
         // get user role in collection
@@ -112,6 +126,6 @@ public class CollectionService {
         }
 
         // update collection with parameters
-        return update(uid, collectionUri, photoCollection);
+        return collectionStore.update(cid, photoCollection);
     }
 }

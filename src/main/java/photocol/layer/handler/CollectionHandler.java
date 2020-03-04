@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import static photocol.definitions.request.EndpointRequestModel.*;
 
 import photocol.definitions.Photo;
-import photocol.definitions.PhotoCollection;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.service.CollectionService;
 import spark.Request;
@@ -74,7 +73,13 @@ public class CollectionHandler {
             return new StatusResponse(STATUS_HTTP_ERROR);
         }
 
-        return collectionService.update(uid, collectionUri, collectionRequest.toServiceType());
+        String collectionOwner = req.params("username");
+        if(collectionOwner==null) {
+            res.status(400);
+            return new StatusResponse(STATUS_HTTP_ERROR);
+        }
+
+        return collectionService.update(uid, collectionUri, collectionOwner, collectionRequest.toServiceType());
     }
 
     // list images in a collection
@@ -92,7 +97,13 @@ public class CollectionHandler {
             return new StatusResponse<>(STATUS_HTTP_ERROR);
         }
 
-        return collectionService.getCollection(uid, collectionUri);
+        String collectionOwner = req.params("username");
+        if(collectionOwner==null) {
+            res.status(400);
+            return new StatusResponse<>(STATUS_HTTP_ERROR);
+        }
+
+        return collectionService.getCollection(uid, collectionUri, collectionOwner);
     }
 
     // add image to collection
@@ -110,6 +121,12 @@ public class CollectionHandler {
             return new StatusResponse(STATUS_HTTP_ERROR);
         }
 
+        String collectionOwner = req.params("username");
+        if(collectionOwner==null) {
+            res.status(400);
+            return new StatusResponse(STATUS_HTTP_ERROR);
+        }
+
         AddImageRequest addRequest = gson.fromJson(req.body(), AddImageRequest.class);
         if(addRequest==null || !addRequest.isValid()) {
             res.status(400);
@@ -117,7 +134,7 @@ public class CollectionHandler {
         }
 
         String imageUri = addRequest.toServiceType();
-        return collectionService.addImage(uid, collectionUri, imageUri);
+        return collectionService.addPhoto(uid, collectionUri, collectionOwner, imageUri);
     }
 
 }

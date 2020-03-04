@@ -41,19 +41,42 @@ public class CollectionStore {
         }
     }
 
-    // check if collection exists and return cid if it does; actually checks uri, not name
-    public StatusResponse<Integer> checkIfCollectionExists(int uid, String collectionUri) {
+    // check if collection exists and is viewable by uid; return cid if it does; actually checks uri, not name
+    public StatusResponse<Integer> checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT collection.cid FROM collection " +
-                    "INNER JOIN acl ON collection.cid=acl.cid WHERE acl.uid=? AND collection.uri=?");
-            stmt.setInt(1, uid);
-            stmt.setString(2, collectionUri);
+            // OLD QUERY: remove later
+//            PreparedStatement stmt = conn.prepareStatement("SELECT collection.cid FROM collection " +
+//                    "INNER JOIN acl ON collection.cid=acl.cid WHERE acl.uid=? AND acl.role=? AND collection.uri=?");
+//            stmt.setInt(1, collectionOwnerUid);
+//            stmt.setInt(2, 0);
+//            stmt.setString(3, collectionUri);
+
+            PreparedStatement stmt = conn.prepareStatement("SELECT cid, uid FROM collection " +
+                    "INNER JOIN acl ON collection.cid=acl.cid " +
+                    "WHERE ((uid=? and role=?) or uid=?) AND collection.uri=?");
+            stmt.setInt(1, collectionOwnerUid);
+            stmt.setInt(2, 0);
+            stmt.setInt(3, uid);
+            stmt.setString(4, collectionUri);
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
                 return new StatusResponse<>(STATUS_COLLECTION_NOT_FOUND);
 
-            return new StatusResponse<>(STATUS_OK, rs.getInt("cid"));
+            // check that both uid and collectionOwnerUid are in the returned set
+            // TODO: very janky but no time -- fix this and maybe query later
+            boolean uidFound = false, collectionOwnerUidFound = false;
+            int cid = rs.getInt("cid");
+            if(rs.getInt("uid")==uid) uidFound = true;
+            if(rs.getInt("uid")==collectionOwnerUid) collectionOwnerUidFound = true;
+            if(rs.next()) {
+                if(rs.getInt("uid")==uid) uidFound = true;
+                if(rs.getInt("uid")==collectionOwnerUid) collectionOwnerUidFound = true;
+            }
+
+            System.out.println("checking 1 2 3 " + uidFound + " " + collectionOwnerUidFound);
+
+            return new StatusResponse<>(STATUS_OK, cid);
         } catch(Exception err) {
             err.printStackTrace();
             return new StatusResponse(STATUS_COLLECTION_NOT_FOUND);

@@ -1,6 +1,6 @@
 import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.utils.URIUtils;
+//import org.apache.http.client.utils.URIUtils;
 import photocol.Photocol;
 import spark.Spark;
 
@@ -23,6 +23,7 @@ public class PhotocolTest extends TestCase {
     // for sending test requests to the webserver; helpful guide to managing HTTP requests from Java: (w/ cookies):
     // https://www.baeldung.com/java-http-request; this imitates a browser session by maintaining cookies
     private CookieManager cookieManager = new CookieManager();
+
     private int request(String uri, String method, String data, List<String[]> headers) throws Exception {
         String url = "http://localhost:" + Spark.port() + uri;
         System.out.printf("Testing %s request to %s with data \"%s\".%n", url, method, data);
@@ -31,24 +32,24 @@ public class PhotocolTest extends TestCase {
         con.setRequestProperty("Cookie", StringUtils.join(cookieManager.getCookieStore().getCookies(), ";"));
 
         // write all headers
-        for(String[] header : headers)
+        for (String[] header : headers)
             con.setRequestProperty(header[0], header[1]);
 
-        if(method.equals("POST")) {
+        if (method.equals("POST")) {
             con.setRequestProperty("Content-Type", "application/json");
-            if(data.length()>0) {
+            if (data.length() > 0) {
                 con.setDoOutput(true);
                 BufferedWriter out = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));
                 out.write(data);
                 out.close();
             }
-        } else if(method.equals("PUT")) {
+        } else if (method.equals("PUT")) {
             con.setDoOutput(true);
             InputStream in = new BufferedInputStream(new FileInputStream(data));
             OutputStream out = new BufferedOutputStream(con.getOutputStream());
             byte[] buffer = new byte[4096];
             int n;
-            while((n = in.read(buffer))>-1)
+            while ((n = in.read(buffer)) > -1)
                 out.write(buffer, 0, n);
             in.close();
             out.close();
@@ -56,19 +57,19 @@ public class PhotocolTest extends TestCase {
 
         // send request and get status
         int status = con.getResponseCode();
-        if(status!=200)
+        if (status != 200)
             return status;
 
         // parse cookies
         String cookieString;
-        if((cookieString = con.getHeaderField("Set-Cookie")) != null)
+        if ((cookieString = con.getHeaderField("Set-Cookie")) != null)
             HttpCookie.parse(cookieString).forEach(cookie -> cookieManager.getCookieStore().add(null, cookie));
 
         // read output
         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         String line;
         StringBuffer response = new StringBuffer();
-        while((line = in.readLine()) != null)
+        while ((line = in.readLine()) != null)
             response.append(line);
         in.close();
         System.out.printf("Response: %s%n", response.toString());
@@ -76,12 +77,16 @@ public class PhotocolTest extends TestCase {
         con.disconnect();
         return status;
     }
+
     private int request(String uri, String method) throws Exception {
         return request(uri, method, "", new ArrayList<>());
     }
+
     private int request(String uri, String method, String data) throws Exception {
         return request(uri, method, data, new ArrayList<>());
     }
+
+
 
     public void testPhotocol() throws Exception {
         request("/image/cat.jpg", "GET");

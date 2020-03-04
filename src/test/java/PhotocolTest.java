@@ -89,7 +89,8 @@ public class PhotocolTest extends TestCase {
 
 
     public void testPhotocol() throws Exception {
-        request("/image/cat.jpg", "GET");
+        System.out.print()
+        /*        request("/image/cat.jpg", "GET");
 //        request("/login", "POST", "{\"email\":\"jlam@cooper.edu\"," +
 //                "\"passwordHash\":\"*&^%E(&%^$#*&%*(%($#^%&%*(&(TR*&$*&TU*&$%&^$^#\"}");
         // create new user
@@ -113,11 +114,13 @@ public class PhotocolTest extends TestCase {
 
         request("/collection/collection1/addphoto", "POST", "{\"uri\":\"418120749463199.jpg\"}");
         request("/collection/collection1/addphoto", "POST", "{\"uri\":\"thisimagedoesntexist.jpg\"}");
-
+//the first lists all collections from a specific collection
         request("/collection/collection1/photos", "GET");
-
+//the second lists all photos owned by the current user
         request("/userphotos", "GET");
+        //the last shows all collections visible by the current user
         request("/usercollections", "GET");
+        //using /collection/:collectionuri/addphoto with data {"uri": "[URISTRING]"}
 
         // this will print ugly stuff to terminal
 //        request("/image/cat.jpg", "GET");
@@ -128,6 +131,6 @@ public class PhotocolTest extends TestCase {
 //        request("/image/test.png/upload", "PUT", "/home/jon/Downloads/cat2.jpg", headers);
 
         request("/logout", "GET");
-        request("/image/cat.jpg", "GET");
+        request("/image/cat.jpg", "GET");*/
     }
 }

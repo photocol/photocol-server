@@ -98,7 +98,7 @@ public class CollectionHandler {
     }
 
     // add image to collection
-    public StatusResponse addImage(Request req, Response res) {
+    public StatusResponse addPhoto(Request req, Response res) {
         res.type("application/json");
 
         // make sure logged in

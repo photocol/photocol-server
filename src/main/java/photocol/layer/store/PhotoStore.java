@@ -4,6 +4,7 @@ import photocol.definitions.Photo;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.DataBase.Method.InitDB;
 
+import javax.xml.transform.Result;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -53,16 +54,18 @@ public class PhotoStore {
         }
     }
 
-    // check to see if user owns photo or has access to a collection that contains the image
-    public StatusResponse checkPhotoPermissions(String uri, int uid) {
+    // check to see if user owns photo or has access to a collection that contains the image; returns pid
+    public StatusResponse<Integer> checkPhotoPermissions(String uri, int uid) {
         try {
 
             // check if user owns the image
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri FROM photocol.photo WHERE uid=? AND uri=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uid=? AND uri=?");
             stmt.setInt(1, uid);
             stmt.setString(2, uri);
-            if(stmt.executeQuery().next())
-                return new StatusResponse(STATUS_OK);
+
+            ResultSet rs = stmt.executeQuery();
+            if(rs.next())
+                return new StatusResponse(STATUS_OK, rs.getInt("pid"));
 
             // check if user is in one of the collections that contains the image
             // TODO: check if this join is actually correct; not sure how to use joins
@@ -75,12 +78,13 @@ public class PhotoStore {
             stmt.setInt(1, uid);
             stmt.setString(2, uri);
 
-            ResultSet rs = stmt.executeQuery();
-
-            return new StatusResponse(rs.next() ? STATUS_OK : STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
+            rs = stmt.executeQuery();
+            if(!rs.next())
+                return new StatusResponse<>(STATUS_IMAGE_NOT_FOUND);
+            return new StatusResponse<>(STATUS_OK, rs.getInt("pid"));
         } catch(Exception err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
+            return new StatusResponse(STATUS_IMAGE_NOT_FOUND);
         }
     }
 

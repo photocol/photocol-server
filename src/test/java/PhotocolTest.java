@@ -106,6 +106,11 @@ public class PhotocolTest extends TestCase {
         //list all the photos in the collection
         request("/collection/collection1/photos", "GET");
 
+        request("/collection/collection1/addphoto", "POST", "{\"uri\":\"418120749463199.jpg\"}");
+        request("/collection/collection1/addphoto", "POST", "{\"uri\":\"thisimagedoesntexist.jpg\"}");
+
+        request("/collection/collection1/photos", "GET");
+
         request("/userphotos", "GET");
         request("/usercollections", "GET");
 

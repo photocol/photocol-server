@@ -21,17 +21,17 @@ public class Photocol {
         Gson gson = new Gson();
         S3ConnectionClient s3 = new S3ConnectionClient();
 
-        // layers of handling
+        // store layer
         UserStore userStore = new UserStore();
-        UserService userService = new UserService(userStore);
-        UserHandler userHandler = new UserHandler(userService, gson);
-
         CollectionStore collectionStore = new CollectionStore();
-        CollectionService collectionService = new CollectionService(collectionStore);
-        CollectionHandler collectionHandler = new CollectionHandler(collectionService, gson);
-
         PhotoStore photoStore = new PhotoStore();
+
+        UserService userService = new UserService(userStore);
+        CollectionService collectionService = new CollectionService(collectionStore, photoStore);
         PhotoService photoService = new PhotoService(photoStore, s3);
+
+        UserHandler userHandler = new UserHandler(userService, gson);
+        CollectionHandler collectionHandler = new CollectionHandler(collectionService, gson);
         PhotoHandler photoHandler = new PhotoHandler(photoService, gson, s3);
 
         // init handlers (highest layer) at all endpoints

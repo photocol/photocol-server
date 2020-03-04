@@ -51,7 +51,7 @@ public class PhotoService {
     // check image permissions and retrieve image
     public StatusResponse<ResponseInputStream<GetObjectResponse>> permalink(String uri, int uid) {
         if(photoStore.checkPhotoPermissions(uri, uid).status()!=STATUS_OK)
-            return new StatusResponse<>(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
+            return new StatusResponse<>(STATUS_IMAGE_NOT_FOUND);
 
         return s3.getObject(uri);
     }

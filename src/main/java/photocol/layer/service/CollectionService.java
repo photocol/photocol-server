@@ -5,6 +5,7 @@ import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.store.CollectionStore;
+import photocol.layer.store.PhotoStore;
 
 import java.util.List;
 
@@ -13,8 +14,10 @@ import static photocol.definitions.response.StatusResponse.Status.*;
 public class CollectionService {
 
     private CollectionStore collectionStore;
-    public CollectionService(CollectionStore collectionStore){
+    private PhotoStore photoStore;
+    public CollectionService(CollectionStore collectionStore, PhotoStore photoStore){
         this.collectionStore = collectionStore;
+        this.photoStore = photoStore;
     }
 
     // list collections that user has access to: passthrough
@@ -49,6 +52,7 @@ public class CollectionService {
 
     // add image to collection
     public StatusResponse addImage(int uid, String collectionUri, String imageuri) {
+        // TODO: get cid and user role in collection in one query to reduce number of queries
         // get cid of collection, make sure it exists
         StatusResponse<Integer> status;
         if((status=collectionStore.checkIfCollectionExists(uid, collectionUri)).status()!=STATUS_OK)
@@ -64,7 +68,12 @@ public class CollectionService {
         if(role!= ACLEntry.Role.ROLE_OWNER && role!= ACLEntry.Role.ROLE_EDITOR)
             return new StatusResponse(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
 
-        // TODO: working here
-        return null;
+        // get image pid
+        if((status=photoStore.checkPhotoPermissions(imageuri, uid)).status()!=STATUS_OK)
+            return status;
+
+        // add image to collection
+        int pid = status.payload();
+        return collectionStore.addImage(cid, pid);
     }
 }

@@ -7,10 +7,7 @@ import photocol.definitions.response.StatusResponse;
 import static photocol.definitions.response.StatusResponse.Status.*;
 import photocol.layer.DataBase.Method.InitDB;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,8 +126,21 @@ public class CollectionStore {
     }
 
     // add photo to collection
-    public StatusResponse addImage(int uid, int cid, String uri) {
-        // TODO: working here
-        return null;
+    public StatusResponse addImage(int cid, int pid) {
+        try {
+            // try to insert image; will fail if not unique
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO icj (cid, pid) VALUES (?, ?);");
+            stmt.setInt(1, cid);
+            stmt.setInt(2, pid);
+
+            stmt.executeUpdate();
+            return new StatusResponse(STATUS_OK);
+        } catch(SQLIntegrityConstraintViolationException err) {
+            // image already exists in collection
+            return new StatusResponse(STATUS_IMAGE_EXISTS_IN_COLLECTION);
+        } catch(Exception err) {
+            err.printStackTrace();
+            return new StatusResponse(STATUS_MISC);
+        }
     }
 }

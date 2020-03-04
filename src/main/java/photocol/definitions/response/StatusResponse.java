@@ -28,7 +28,8 @@ public class StatusResponse<T> {
         STATUS_IMAGE_MIMETYPE_INVALID(303),
         STATUS_IMAGE_NAME_INVALID(304),
         STATUS_IMAGE_DESCRIPTION_INVALID(305),
-        STATUS_IMAGE_NOT_FOUND(306);
+        STATUS_IMAGE_NOT_FOUND(306),
+        STATUS_IMAGE_EXISTS_IN_COLLECTION(307);
 
         private int intStatus;
         Status(int intStatus) {

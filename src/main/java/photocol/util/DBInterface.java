@@ -10,7 +10,6 @@ import photocol.layer.DataBase.Method.dbprint;
 
 public class DBInterface {
 
-
     public static void main(String[] args) {
 
     }

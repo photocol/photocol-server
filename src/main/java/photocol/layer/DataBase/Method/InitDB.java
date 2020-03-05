@@ -8,7 +8,7 @@ public class InitDB {
     private String DB_URL = "jdbc:mysql://localhost/";
 
     //  Database credentials
-    private final String USER = "root";
+    private final String USER = "photo_server";
     private final String PASS = "password";
     private Connection conk = null;
     public InitDB(){

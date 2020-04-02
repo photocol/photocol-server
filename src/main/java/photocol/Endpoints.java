@@ -41,6 +41,10 @@ public class Endpoints {
 
     // CORS middleware
     private void setupCors(Request req, Response res) throws Exception {
+        // passthrough on image endpoint
+        if(req.uri().startsWith("/image/") && req.requestMethod().equals("GET"))
+            return;
+
         // FIXME: for now, only allowing requests from localhost
         // TODO: how to actually verify origin?
         String origin = req.headers("Origin");

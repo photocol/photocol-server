@@ -74,8 +74,6 @@ public class CollectionStore {
                 if(rs.getInt("uid")==collectionOwnerUid) collectionOwnerUidFound = true;
             }
 
-            System.out.println("checking 1 2 3 " + uidFound + " " + collectionOwnerUidFound);
-
             return new StatusResponse<>(STATUS_OK, cid);
         } catch(Exception err) {
             err.printStackTrace();

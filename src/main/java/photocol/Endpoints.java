@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import photocol.layer.handler.CollectionHandler;
 import photocol.layer.handler.PhotoHandler;
 import photocol.layer.handler.UserHandler;
+import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
@@ -14,6 +15,11 @@ public class Endpoints {
 
     public Endpoints(UserHandler userHandler, CollectionHandler collectionHandler, PhotoHandler photoHandler,
                      Gson gson) {
+
+        // CORS configuration middleware (all routes)
+        Spark.before(this::setupCors);
+
+        // TODO: run authentication middleware to reduce redundancy in handlers
 
         // login endpoints
         Spark.post("/signup", userHandler::signUp, gson::toJson);
@@ -33,8 +39,16 @@ public class Endpoints {
         Spark.post("/collection/:username/:collectionuri/addphoto", collectionHandler::addPhoto, gson::toJson);
     }
 
-    // for testing only; will throw an exception if called
-    private String dummyHandler(Request req, Response res) {
-        throw new RuntimeException();
+    // CORS middleware
+    private void setupCors(Request req, Response res) throws Exception {
+        // FIXME: for now, only allowing requests from localhost
+        // TODO: how to actually verify origin?
+        String origin = req.headers("Origin");
+        if(origin==null || !origin.startsWith("http://localhost")) {
+            Spark.halt(401);
+        }
+        res.header("Access-Control-Allow-Origin", origin);
+        res.header("Access-Control-Allow-Credentials", "true");
+        res.header("Vary", "Origin");
     }
 }

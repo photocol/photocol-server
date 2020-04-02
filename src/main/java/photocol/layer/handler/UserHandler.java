@@ -50,12 +50,6 @@ public class UserHandler {
     public StatusResponse logIn(Request req, Response res) {
         res.type("application/json");
 
-        // CORS
-        // TODO: move this into middleware and check origin
-        res.header("Access-Control-Allow-Origin", req.headers("Origin"));
-        res.header("Access-Control-Allow-Credentials", "true");
-        res.header("Vary", "Origin");
-
         StatusResponse status;
         if(req.session().attribute("uid")!=null)
             return new StatusResponse(STATUS_LOGGED_IN);

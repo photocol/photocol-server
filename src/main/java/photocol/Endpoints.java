@@ -54,5 +54,13 @@ public class Endpoints {
         res.header("Access-Control-Allow-Origin", origin);
         res.header("Access-Control-Allow-Credentials", "true");
         res.header("Vary", "Origin");
+
+        //CORS requires a preflight request (for PUT only???) and set some options
+        //so we set them here and sent an HTTP OK
+        if(req.requestMethod().equals("OPTIONS")) {
+            res.header("Access-Control-Allow-Headers", "content-type");
+            res.header("Access-Control-Allow-Methods", "PUT");
+            Spark.halt(200);
+        }
     }
 }

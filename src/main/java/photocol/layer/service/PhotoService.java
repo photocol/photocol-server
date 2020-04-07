@@ -21,7 +21,6 @@ public class PhotoService {
     }
 
     public StatusResponse<String> upload(String contentType, byte[] data, String imageuri, int uid) {
-
         // for a more exhaustive list, see: https://www.iana.org/assignments/media-types/media-types.xhtml#image
         // for now, only common ones allowed
         String ext;

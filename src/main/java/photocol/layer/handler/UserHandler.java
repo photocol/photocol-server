@@ -67,6 +67,7 @@ public class UserHandler {
 
             req.session().invalidate();
             req.session(true).attribute("uid", status.payload());
+            req.session().attribute("username", loginRequest.toServiceType().username);
             return new StatusResponse(STATUS_OK);
         } catch (JsonParseException e) {
             res.status(400);
@@ -86,13 +87,13 @@ public class UserHandler {
         return new StatusResponse(STATUS_OK);
     }
 
-    public StatusResponse<Boolean> userDetails(Request req, Response res) {
+    public StatusResponse userDetails(Request req, Response res) {
         res.type("application/json");
 
         if(req.session().attribute("uid")==null)
             return new StatusResponse(STATUS_NOT_LOGGED_IN);
 
-        return new StatusResponse<>(STATUS_OK, req.session().attribute("uid")!=null);
+        return new StatusResponse<>(STATUS_OK, req.session().attribute("username"));
     }
 
 }

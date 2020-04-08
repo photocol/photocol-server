@@ -28,9 +28,9 @@ public class Endpoints {
         Spark.get("/userdetails", userHandler::userDetails, gson::toJson);
 
         Spark.get("/userphotos", photoHandler::getUserPhotos, gson::toJson);
-        Spark.get("/image/:imageuri", photoHandler::permalink);
-        Spark.put("/image/:imageuri/upload", photoHandler::upload, gson::toJson);
-        Spark.post("/image/:imageuri/update", photoHandler::update, gson::toJson);
+        Spark.get("/photo/:photouri", photoHandler::permalink);
+        Spark.put("/photo/:photouri/upload", photoHandler::upload, gson::toJson);
+        Spark.post("/photo/:photouri/update", photoHandler::update, gson::toJson);
 
         Spark.get("/usercollections", collectionHandler::getUserCollections, gson::toJson);
         Spark.post("/collection/new", collectionHandler::createCollection, gson::toJson);

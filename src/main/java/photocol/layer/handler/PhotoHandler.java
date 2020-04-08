@@ -27,7 +27,7 @@ public class PhotoHandler {
 
     // simple image passthrough from s3
     public Object permalink(Request req, Response res) {
-        String uri = req.params("imageuri");
+        String uri = req.params("photouri");
         String conditionalHeader = req.headers("If-None-Match");
         String eTag;
         Integer uid = req.session().attribute("uid");
@@ -67,7 +67,7 @@ public class PhotoHandler {
             return new StatusResponse<>(STATUS_NOT_LOGGED_IN);
 
         // get file data
-        return photoService.upload(req.contentType(), req.bodyAsBytes(), req.params("imageuri"), uid);
+        return photoService.upload(req.contentType(), req.bodyAsBytes(), req.params("photouri"), uid);
     }
 
     // show all photos owned by user

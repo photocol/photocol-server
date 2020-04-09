@@ -7,9 +7,13 @@ public class ACLEntry {
     public int uid;
 
     // for use when converting from db
-    public ACLEntry(String email, int role) {
+    public ACLEntry(String username, int role) {
         this.username = username;
         this.role = Role.fromInt(role);
+    }
+    public ACLEntry(String username, Role role) {
+        this.username = username;
+        this.role = role;
     }
 
     public void setUid(int uid) {

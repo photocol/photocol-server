@@ -7,6 +7,7 @@ public class PhotoCollection {
     public String name;
     public List<ACLEntry> aclList;
     public String uri;
+    public String owner;
 
     // FIXME: this is a mess of constructors depending on the use case
     public PhotoCollection(boolean isPublic, String name) {

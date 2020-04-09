@@ -24,8 +24,8 @@ public class CollectionService {
     }
 
     // list collections that user has access to: passthrough
-    public StatusResponse<List<PhotoCollection>> getUserCollections(int uid) {
-        return collectionStore.getUserCollections(uid);
+    public StatusResponse<List<PhotoCollection>> getUserCollections(int uid, String username) {
+        return collectionStore.getUserCollections(uid, username);
     }
 
     // create collection: passthrough

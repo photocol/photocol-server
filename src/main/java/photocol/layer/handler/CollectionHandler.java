@@ -31,7 +31,7 @@ public class CollectionHandler {
         if(uid==null)
             return new StatusResponse(STATUS_NOT_LOGGED_IN);
 
-        return collectionService.getUserCollections(uid);
+        return collectionService.getUserCollections(uid, req.session().attribute("username"));
     }
 
     // create a collection

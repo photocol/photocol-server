@@ -19,19 +19,29 @@ public class CollectionStore {
     }
 
     // get all collections that user has permissions to
-    public StatusResponse<List<PhotoCollection>> getUserCollections(int uid) {
+    public StatusResponse<List<PhotoCollection>> getUserCollections(int uid, String username) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT pub, name, uri, role FROM collection " +
-                    "INNER JOIN acl ON collection.cid=acl.cid " +
-                    "WHERE acl.uid=?");
+            // TODO: remove old query
+//            PreparedStatement stmt = conn.prepareStatement("SELECT pub, name, uri, role FROM collection " +
+//                    "INNER JOIN acl ON collection.cid=acl.cid " +
+//                    "INNER JOIN user ON user.uid=acl.uid " +
+//                    "WHERE acl.uid=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT username as owner, pub, name, uri, acl1.role " +
+                    "FROM collection " +
+                    "INNER JOIN acl AS acl1 ON collection.cid=acl1.cid " +
+                    "INNER JOIN acl AS acl2 ON collection.cid=acl2.cid " +
+                    "INNER JOIN user ON acl2.uid=user.uid " +
+                    "WHERE acl1.uid=? AND acl2.role=0");
             stmt.setInt(1, uid);
 
             ResultSet rs = stmt.executeQuery();
             List<PhotoCollection> photoCollections = new ArrayList<>();
             while(rs.next()) {
-                // here, aclList just indicates the current user's role
+                // here, aclList just indicates the current user's role and owner only, not full aclList
                 List<ACLEntry> aclList = new ArrayList<>();
-                aclList.add(new ACLEntry("current user", rs.getInt("role")));
+                aclList.add(new ACLEntry(username, rs.getInt("role")));
+                aclList.add(new ACLEntry(rs.getString("owner"), ACLEntry.Role.ROLE_OWNER));
+
                 photoCollections.add(new PhotoCollection(rs.getBoolean("pub"), rs.getString("name"), aclList));
             }
             return new StatusResponse<>(STATUS_OK, photoCollections);

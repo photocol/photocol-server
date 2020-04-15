@@ -3,44 +3,77 @@
 package photocol;
 
 import com.google.gson.Gson;
+import photocol.definitions.exception.HttpMessageException;
+import photocol.definitions.response.StatusResponse;
 import photocol.layer.handler.CollectionHandler;
 import photocol.layer.handler.PhotoHandler;
 import photocol.layer.handler.UserHandler;
-import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
+
+import static photocol.definitions.response.StatusResponse.Status.STATUS_NOT_LOGGED_IN;
+import static spark.Spark.*;
 
 public class Endpoints {
 
     public Endpoints(UserHandler userHandler, CollectionHandler collectionHandler, PhotoHandler photoHandler,
                      Gson gson) {
 
-        // CORS configuration middleware (all routes)
-        Spark.before(this::setupCors);
+        path("/perma", () -> {
+            before(this::checkLoggedIn);
+            get("/:photouri", photoHandler::permalink);
+        });
 
-        // TODO: run authentication middleware to reduce redundancy in handlers
+        path("/user", () -> {
+            before(this::setupCors);
+            before("/login", this::checkLoggedIn);
 
-        // login endpoints
-        Spark.post("/signup", userHandler::signUp, gson::toJson);
-        Spark.post("/login", userHandler::logIn, gson::toJson);
-        Spark.get("/logout", userHandler::logOut, gson::toJson);
-        Spark.get("/userdetails", userHandler::userDetails, gson::toJson);
+            post("/signup", userHandler::signUp, gson::toJson);
+            post("/login", userHandler::logIn, gson::toJson);
+            get("/logout", userHandler::logOut, gson::toJson);
+            get("/details", userHandler::userDetails, gson::toJson);
+        });
 
-        Spark.get("/userphotos", photoHandler::getUserPhotos, gson::toJson);
-        Spark.get("/photo/:photouri", photoHandler::permalink);
-        Spark.put("/photo/:photouri/upload", photoHandler::upload, gson::toJson);
-        Spark.post("/photo/:photouri/update", photoHandler::update, gson::toJson);
+        path("/photo", () -> {
+            before(this::setupCors);
+            before(this::checkLoggedIn);
 
-        Spark.get("/usercollections", collectionHandler::getUserCollections, gson::toJson);
-        Spark.post("/collection/new", collectionHandler::createCollection, gson::toJson);
-        Spark.get("/collection/:username/:collectionuri", collectionHandler::getCollection, gson::toJson);
-        Spark.post("/collection/:username/:collectionuri/update", collectionHandler::updateCollection, gson::toJson);
-        Spark.post("/collection/:username/:collectionuri/addphoto", collectionHandler::addPhoto, gson::toJson);
+            get("/currentuser", photoHandler::getUserPhotos, gson::toJson);
+            path("/:photouri", () -> {
+                put("/upload", photoHandler::upload, gson::toJson);
+                post("/update", photoHandler::update, gson::toJson);
+            });
+        });
+
+        path("/collection", () -> {
+            before(this::setupCors);
+            before(this::checkLoggedIn);
+
+            get("/currentuser", collectionHandler::getUserCollections, gson::toJson);
+            post("/new", collectionHandler::createCollection, gson::toJson);
+            path("/:username/:collectionuri", () -> {
+                get("/", collectionHandler::getCollection, gson::toJson);
+                post("/update", collectionHandler::updateCollection, gson::toJson);
+                post("/addphoto", collectionHandler::addPhoto, gson::toJson);
+            });
+        });
+
+        // simple exception mapper
+        exception(HttpMessageException.class, (exception, req, res) -> {
+            res.status(exception.status());
+            res.body(exception.message());
+        });
+    }
+
+    // authorization endpoint
+    private void checkLoggedIn(Request req, Response res) throws HttpMessageException {
+        if(req.session().attribute("uid")==null)
+            throw new HttpMessageException(401, "Not signed in");
     }
 
     // CORS middleware
-    private void setupCors(Request req, Response res) throws Exception {
+    private void setupCors(Request req, Response res) throws HttpMessageException {
         // passthrough on image endpoint
         if(req.uri().startsWith("/photo/") && req.requestMethod().equals("GET"))
             return;
@@ -48,9 +81,8 @@ public class Endpoints {
         // FIXME: for now, only allowing requests from localhost
         // TODO: how to actually verify origin?
         String origin = req.headers("Origin");
-        if(origin==null || !origin.startsWith("http://localhost")) {
-            Spark.halt(401);
-        }
+        if(origin==null)
+            throw new HttpMessageException(401, "Unauthorized origin header value");
         res.header("Access-Control-Allow-Origin", origin);
         res.header("Access-Control-Allow-Credentials", "true");
         res.header("Vary", "Origin");

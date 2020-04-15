@@ -4,7 +4,6 @@ package photocol;
 
 import com.google.gson.Gson;
 import photocol.definitions.exception.HttpMessageException;
-import photocol.definitions.response.StatusResponse;
 import photocol.layer.handler.CollectionHandler;
 import photocol.layer.handler.PhotoHandler;
 import photocol.layer.handler.UserHandler;
@@ -12,7 +11,6 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
-import static photocol.definitions.response.StatusResponse.Status.STATUS_NOT_LOGGED_IN;
 import static spark.Spark.*;
 
 public class Endpoints {
@@ -66,7 +64,7 @@ public class Endpoints {
         });
     }
 
-    // authorization endpoint
+    // authorization middleware
     private void checkLoggedIn(Request req, Response res) throws HttpMessageException {
         if(req.session().attribute("uid")==null)
             throw new HttpMessageException(401, "Not signed in");
@@ -87,8 +85,8 @@ public class Endpoints {
         res.header("Access-Control-Allow-Credentials", "true");
         res.header("Vary", "Origin");
 
-        //CORS requires a preflight request (for PUT only???) and set some options
-        //so we set them here and sent an HTTP OK
+        // CORS requires a preflight request for certain requests (e.g., PUT) and set some options
+        // so we set them here and sent an HTTP OK
         if(req.requestMethod().equals("OPTIONS")) {
             res.header("Access-Control-Allow-Headers", "content-type");
             res.header("Access-Control-Allow-Methods", "PUT");

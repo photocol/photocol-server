@@ -19,13 +19,14 @@ public class Endpoints {
                      Gson gson) {
 
         path("/perma", () -> {
+            // no CORS setup required here -- static resource
             before(this::checkLoggedIn);
             get("/:photouri", photoHandler::permalink);
         });
 
         path("/user", () -> {
             before(this::setupCors);
-            before("/login", this::checkLoggedIn);
+            before("/logout", this::checkLoggedIn);
 
             post("/signup", userHandler::signUp, gson::toJson);
             post("/login", userHandler::logIn, gson::toJson);
@@ -72,10 +73,6 @@ public class Endpoints {
 
     // CORS middleware
     private void setupCors(Request req, Response res) throws HttpMessageException {
-        // passthrough on image endpoint
-        if(req.uri().startsWith("/photo/") && req.requestMethod().equals("GET"))
-            return;
-
         // FIXME: for now, only allowing requests from localhost
         // TODO: how to actually verify origin?
         String origin = req.headers("Origin");

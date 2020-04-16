@@ -64,7 +64,7 @@ public class PhotoService {
      * Gets image stream from permalink
      * @param uri   image uri (from permalink)
      * @param uid   viewer uid
-     * @return      ResponseInputStream<GetObjectResponse> of image
+     * @return      ResponseInputStream GetObjectResponse of image
      * @throws HttpMessageException on failure
      */
     public ResponseInputStream<GetObjectResponse> permalink(String uri, int uid)
@@ -77,7 +77,7 @@ public class PhotoService {
      * Get user photos (simple passthrough).
      * @param uid   uid of user to get photos of
      * @return      list of photo objects
-     * @throws HttpMessageException
+     * @throws HttpMessageException on failure
      */
     public List<Photo> getUserPhotos(int uid) throws HttpMessageException {
         return photoStore.getUserPhotos(uid);

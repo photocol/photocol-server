@@ -28,7 +28,7 @@ public class CollectionHandler {
      * @param req   spark request object
      * @param res   spark response object
      * @return      list of collections on success
-     * @throws HttpMessageException
+     * @throws HttpMessageException on failure
      */
     public List<PhotoCollection> getUserCollections(Request req, Response res) throws HttpMessageException {
         int uid = req.session().attribute("uid");
@@ -93,10 +93,10 @@ public class CollectionHandler {
 
     /**
      * Add photo to collection
-     * @param req
-     * @param res
-     * @return
-     * @throws HttpMessageException
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on failure
      */
     public boolean addPhoto(Request req, Response res) throws HttpMessageException {
         int uid = req.session().attribute("uid");

@@ -30,7 +30,7 @@ public class S3ConnectionClient {
     /**
      * Get image as stream from server
      * @param key   image uri
-     * @return      ResponseInputStream<GetObjectResponse> object of image
+     * @return      ResponseInputStream GetObjectResponse object of image
      * @throws HttpMessageException on S3 error
      */
     public ResponseInputStream<GetObjectResponse> getObject(String key) throws HttpMessageException {

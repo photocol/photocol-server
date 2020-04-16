@@ -41,7 +41,7 @@ public class PhotoStore {
      * Get all photos that belong to a user
      * @param uid   user uid
      * @return      list of photos that belong to user
-     * @throws HttpMessageException
+     * @throws HttpMessageException on failure
      */
     public List<Photo> getUserPhotos(int uid) throws HttpMessageException {
         try {
@@ -67,7 +67,7 @@ public class PhotoStore {
      * @param uri   uri of photo
      * @param uid   uid of photo owner
      * @return      pid on success
-     * @throws HttpMessageException
+     * @throws HttpMessageException on failure
      */
     public int checkPhotoPermissions(String uri, int uid) throws HttpMessageException {
         try {

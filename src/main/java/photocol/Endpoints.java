@@ -20,12 +20,12 @@ public class Endpoints {
 
         path("/perma", () -> {
             // no CORS setup required here -- static resource
-            before(this::checkLoggedIn);
+            before("/*", this::checkLoggedIn);
             get("/:photouri", photoHandler::permalink);
         });
 
         path("/user", () -> {
-            before(this::setupCors);
+            before("/*", this::setupCors);
             before("/logout", this::checkLoggedIn);
 
             post("/signup", userHandler::signUp, gson::toJson);
@@ -35,8 +35,8 @@ public class Endpoints {
         });
 
         path("/photo", () -> {
-            before(this::setupCors);
-            before(this::checkLoggedIn);
+            before("/*", this::setupCors);
+            before("/*", this::checkLoggedIn);
 
             get("/currentuser", photoHandler::getUserPhotos, gson::toJson);
             path("/:photouri", () -> {
@@ -46,8 +46,8 @@ public class Endpoints {
         });
 
         path("/collection", () -> {
-            before(this::setupCors);
-            before(this::checkLoggedIn);
+            before("/*", this::setupCors);
+            before("/*", this::checkLoggedIn);
 
             get("/currentuser", collectionHandler::getUserCollections, gson::toJson);
             post("/new", collectionHandler::createCollection, gson::toJson);
@@ -61,14 +61,14 @@ public class Endpoints {
         // simple exception mapper
         exception(HttpMessageException.class, (exception, req, res) -> {
             res.status(exception.status());
-            res.body(exception.message());
+            res.body(exception.error());
         });
     }
 
     // authorization middleware
     private void checkLoggedIn(Request req, Response res) throws HttpMessageException {
         if(req.session().attribute("uid")==null)
-            throw new HttpMessageException(401, "Not signed in");
+            throw new HttpMessageException(401, HttpMessageException.Error.NOT_LOGGED_IN);
     }
 
     // CORS middleware
@@ -77,7 +77,7 @@ public class Endpoints {
         // TODO: how to actually verify origin?
         String origin = req.headers("Origin");
         if(origin==null)
-            throw new HttpMessageException(401, "Unauthorized origin header value");
+            throw new HttpMessageException(401, HttpMessageException.Error.UNAUTHORIZED_ORIGIN);
         res.header("Access-Control-Allow-Origin", origin);
         res.header("Access-Control-Allow-Credentials", "true");
         res.header("Vary", "Origin");
@@ -89,5 +89,8 @@ public class Endpoints {
             res.header("Access-Control-Allow-Methods", "PUT");
             Spark.halt(200);
         }
+
+        // all cors endpoints send json response
+        res.type("application/json");
     }
 }

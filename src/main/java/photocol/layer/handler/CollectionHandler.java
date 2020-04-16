@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import static photocol.definitions.request.EndpointRequestModel.*;
 
 import photocol.definitions.Photo;
+import photocol.definitions.exception.HttpMessageException;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.service.CollectionService;
 import spark.Request;
@@ -53,7 +54,7 @@ public class CollectionHandler {
     }
 
     // update a collection
-    public StatusResponse updateCollection(Request req, Response res) {
+    public StatusResponse updateCollection(Request req, Response res) throws HttpMessageException  {
         res.type("application/json");
 
         // make sure logged in
@@ -83,7 +84,7 @@ public class CollectionHandler {
     }
 
     // list images in a collection
-    public StatusResponse<List<Photo>> getCollection(Request req, Response res) {
+    public StatusResponse<List<Photo>> getCollection(Request req, Response res) throws HttpMessageException {
         res.type("application/json");
 
         // make sure logged in
@@ -107,7 +108,7 @@ public class CollectionHandler {
     }
 
     // add image to collection
-    public StatusResponse addPhoto(Request req, Response res) {
+    public StatusResponse addPhoto(Request req, Response res) throws HttpMessageException {
         res.type("application/json");
 
         // make sure logged in

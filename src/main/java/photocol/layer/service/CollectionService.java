@@ -3,6 +3,7 @@ package photocol.layer.service;
 import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
+import photocol.definitions.exception.HttpMessageException;
 import photocol.definitions.response.StatusResponse;
 import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
@@ -38,13 +39,15 @@ public class CollectionService {
     }
 
     // list items in collection
-    public StatusResponse<List<Photo>> getCollection(int uid, String collectionUri, String collectionOwner) {
+    public StatusResponse<List<Photo>> getCollection(int uid, String collectionUri, String collectionOwner)
+            throws HttpMessageException {
         StatusResponse<Integer> status;
 
         // get uid
-        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
-            return new StatusResponse<>(status.status());
-        int collectionOwnerUid = status.payload();
+        // TODO: remove
+//        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
+//            return new StatusResponse<>(status.status());
+        int collectionOwnerUid = userStore.getUid(collectionOwner);
 
         // make sure collection exists
         if((status=collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, collectionUri)).status()!=STATUS_OK)
@@ -60,11 +63,14 @@ public class CollectionService {
     }
 
     // add image to collection
-    public StatusResponse addPhoto(int uid, String collectionUri, String collectionOwner, String imageuri) {
+    public StatusResponse addPhoto(int uid, String collectionUri, String collectionOwner, String imageuri)
+            throws HttpMessageException {
         StatusResponse<Integer> status;
-        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
-            return status;
-        int collectionOwnerUid = status.payload();
+        // TODO: remove
+//        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
+//            return status;
+//        int collectionOwnerUid = status.payload();
+        int collectionOwnerUid = userStore.getUid(collectionOwner);
 
         // TODO: get cid and user role in collection in one query to reduce number of queries
         // get cid of collection, make sure it exists
@@ -91,11 +97,14 @@ public class CollectionService {
     }
 
     // update collection
-    public StatusResponse update(int uid, String collectionUri, String collectionOwner, PhotoCollection photoCollection) {
+    public StatusResponse update(int uid, String collectionUri, String collectionOwner, PhotoCollection photoCollection)
+            throws HttpMessageException {
         StatusResponse<Integer> status;
-        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
-            return status;
-        int collectionOwnerUid = status.payload();
+        // TODO: remove
+//        if((status=userStore.getUid(collectionOwner)).status()!=STATUS_OK)
+//            return status;
+//        int collectionOwnerUid = status.payload();
+        int collectionOwnerUid = userStore.getUid(collectionOwner);
 
         // these first three stages are exactly the same as above -- make more DRY by putting in separate service fn
         if((status=collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, collectionUri)).status()!=STATUS_OK)
@@ -120,9 +129,11 @@ public class CollectionService {
 
         // get list of uids from usernames
         for(ACLEntry entry : photoCollection.aclList) {
-             if((status=userStore.getUid(entry.username)).status()!=STATUS_OK)
-                 return new StatusResponse(STATUS_USER_NOT_FOUND);
-             entry.setUid(status.payload());
+            // TODO: rename
+//             if((status=userStore.getUid(entry.username)).status()!=STATUS_OK)
+//                 return new StatusResponse(STATUS_USER_NOT_FOUND);
+//             entry.setUid(status.payload());
+            entry.setUid(userStore.getUid(entry.username));
         }
 
         // update collection with parameters

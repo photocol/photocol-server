@@ -9,6 +9,7 @@ public class HttpMessageException extends Exception {
         UNAUTHORIZED_ORIGIN,
         INPUT_FORMAT_ERROR,
         DATABASE_QUERY_ERROR,
+        S3_ERROR,
         CREDENTIALS_NOT_UNIQUE,
         USER_FOUND,
         USER_NOT_FOUND,

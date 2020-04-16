@@ -88,8 +88,7 @@ public class CollectionService {
             return new StatusResponse(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
 
         // get image pid
-        if((status=photoStore.checkPhotoPermissions(imageuri, uid)).status()!=STATUS_OK)
-            return status;
+        photoStore.checkPhotoPermissions(imageuri, uid);
 
         // add image to collection
         int pid = status.payload();

@@ -1,18 +1,14 @@
 package photocol.layer.store;
 
 import photocol.definitions.Photo;
-import photocol.definitions.response.StatusResponse;
+import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.DataBase.Method.InitDB;
 
-import javax.xml.transform.Result;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static photocol.definitions.response.StatusResponse.Status.*;
+import static photocol.definitions.exception.HttpMessageException.Error.*;
 
 public class PhotoStore {
 
@@ -22,54 +18,72 @@ public class PhotoStore {
         this.conn = new InitDB().initialDB("photocol");
     }
 
-    // check if photo uri is taken; used when generating random photo uris
-    public StatusResponse checkIfPhotoExists(String uri) {
+    /**
+     * Check if photo uri is taken; used when generating random photo uris
+     * @param uri   uri to check
+     * @return      whether photo uri is taken
+     * @throws HttpMessageException on error
+     */
+    public boolean checkIfPhotoExists(String uri) throws HttpMessageException {
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uri=?");
             stmt.setString(1, uri);
 
             ResultSet rs = stmt.executeQuery();
-            return new StatusResponse(rs.next() ? STATUS_OK : STATUS_IMAGE_NOT_FOUND);
+            return rs.next();
         } catch(Exception err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_IMAGE_NOT_FOUND);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // get all images that belong to a user
-    public StatusResponse<List<Photo>> getUserPhotos(int uid) {
+    /**
+     * Get all photos that belong to a user
+     * @param uid   user uid
+     * @return      list of photos that belong to user
+     * @throws HttpMessageException
+     */
+    public List<Photo> getUserPhotos(int uid) throws HttpMessageException {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photocol.photo WHERE uid=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date " +
+                    "FROM photocol.photo WHERE uid=?");
             stmt.setInt(1, uid);
 
             ResultSet rs = stmt.executeQuery();
             List<Photo> userPhotos = new ArrayList<>();
             while(rs.next())
-                userPhotos.add(new Photo(rs.getString("uri"), rs.getString("description"), rs.getDate("upload_date")));
-            return new StatusResponse<>(STATUS_OK, userPhotos);
-        } catch(Exception err) {
+                userPhotos.add(new Photo(rs.getString("uri"),
+                                         rs.getString("description"),
+                                         rs.getDate("upload_date")));
+            return userPhotos;
+        } catch(SQLException err) {
             err.printStackTrace();
-            // TODO: change status code to something more fitting
-            return new StatusResponse<>(STATUS_MISC);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // check to see if user owns photo or has access to a collection that contains the image; returns pid
-    public StatusResponse<Integer> checkPhotoPermissions(String uri, int uid) {
+    /**
+     * Check to see if user owns photo or has access to a collection that contains the photo, returning pid on success.
+     * @param uri   uri of photo
+     * @param uid   uid of photo owner
+     * @return
+     * @throws HttpMessageException
+     */
+    public int checkPhotoPermissions(String uri, int uid) throws HttpMessageException {
         try {
-
-            // check if user owns the image
+            // check if user owns the photo
             PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uid=? AND uri=?");
             stmt.setInt(1, uid);
             stmt.setString(2, uri);
 
             ResultSet rs = stmt.executeQuery();
             if(rs.next())
-                return new StatusResponse(STATUS_OK, rs.getInt("pid"));
+                return rs.getInt("pid");
 
-            // check if user is in one of the collections that contains the image
+            // check if user is in one of the collections that contains the photo
             // TODO: check if this join is actually correct; not sure how to use joins
-            // TODO: can probably simplify to one join if duplicate imageuri to icj table
+            // TODO: can probably simplify to one join if duplicate photouri to icj table
+            // TODO: check public attribute of collections
             stmt = conn.prepareStatement("SELECT photocol.photo.pid " +
                     "FROM photocol.acl " +
                     "INNER JOIN photocol.icj ON photocol.acl.cid=photocol.icj.cid " +
@@ -80,33 +94,43 @@ public class PhotoStore {
 
             rs = stmt.executeQuery();
             if(!rs.next())
-                return new StatusResponse<>(STATUS_IMAGE_NOT_FOUND);
-            return new StatusResponse<>(STATUS_OK, rs.getInt("pid"));
+                throw new HttpMessageException(401, IMAGE_NOT_FOUND);
+
+            // success
+            return rs.getInt("pid");
         } catch(Exception err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_IMAGE_NOT_FOUND);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // create image in database
-    public StatusResponse createImage(String uri, String desc, int uid) {
+    /**
+     * Create photo in database
+     * @param uri   uri of photo
+     * @param desc  default photo description
+     * @param uid   uid of owner
+     * @return      true on success
+     * @throws HttpMessageException on error
+     */
+    public boolean createImage(String uri, String desc, int uid) throws HttpMessageException {
         // assume uri is already checked to be unique in service layer
         try {
-            PreparedStatement stmt = conn.prepareStatement("INSERT INTO photocol.photo (uri, upload_date, description, uid, orig_uid) VALUES(?,?,?,?,?)");
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO photocol.photo " +
+                    "(uri, upload_date, description, uid, orig_uid) VALUES(?,?,?,?,?)");
             stmt.setString(1, uri);
             stmt.setDate(2, new Date(new java.util.Date().getTime()));
             stmt.setString(3, desc);
             stmt.setInt(4, uid);
             stmt.setInt(5, uid);
 
+            // this should never happen
             if(stmt.executeUpdate()<1)
-                return new StatusResponse(STATUS_MISC);
+                throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
 
-            return new StatusResponse(STATUS_OK, uri);
-        } catch(Exception err) {
+            return true;
+        } catch(SQLException err) {
             err.printStackTrace();
-            // TODO: add more fitting status name
-            return new StatusResponse(STATUS_MISC);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 }

@@ -2,7 +2,7 @@ package photocol.layer.handler;
 
 import com.google.gson.Gson;
 import photocol.definitions.Photo;
-import photocol.definitions.response.StatusResponse;
+import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.service.PhotoService;
 import photocol.util.S3ConnectionClient;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -11,8 +11,6 @@ import spark.Request;
 import spark.Response;
 
 import java.util.List;
-
-import static photocol.definitions.response.StatusResponse.Status.*;
 
 public class PhotoHandler {
 
@@ -25,25 +23,32 @@ public class PhotoHandler {
         this.s3 = s3;
     }
 
-    // simple image passthrough from s3
-    public Object permalink(Request req, Response res) {
+    /**
+     * Image passthrough from S3. If an ETag is specified and it matches the one from S3, a 304 (cached) response
+     * is given.
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      image stream on success (may return early with 304 if cache success)
+     * @throws HttpMessageException on failure
+     */
+    public Object permalink(Request req, Response res) throws HttpMessageException {
         String uri = req.params("photouri");
         String conditionalHeader = req.headers("If-None-Match");
         String eTag;
-        Integer uid = req.session().attribute("uid");
-        if(uid==null) {
-            res.status(404);
-            return gson.toJson(new StatusResponse<>(STATUS_IMAGE_NOT_FOUND));
-        }
 
-        StatusResponse<ResponseInputStream<GetObjectResponse>> status;
-        if((status=photoService.permalink(uri, uid)).status()!=STATUS_OK) {
-            res.status(404);
-            return gson.toJson(new StatusResponse<>(STATUS_IMAGE_NOT_FOUND));
-        }
+        int uid = req.session().attribute("uid");
+
+        // TODO: remove
+//        StatusResponse<ResponseInputStream<GetObjectResponse>> status;
+//        if((status=photoService.permalink(uri, uid)).status()!=STATUS_OK) {
+//            res.status(404);
+//            return gson.toJson(new StatusResponse<>(STATUS_IMAGE_NOT_FOUND));
+//        }
+        ResponseInputStream<GetObjectResponse> response = photoService.permalink(uri, uid);
 
         // caching with etags
-        ResponseInputStream<GetObjectResponse> response = status.payload();
+        // TODO: remove
+//        ResponseInputStream<GetObjectResponse> response = status.payload();
         eTag = response.response().eTag();
         if (conditionalHeader != null && conditionalHeader.equals(eTag)) {
             res.status(304);
@@ -57,40 +62,42 @@ public class PhotoHandler {
         return response;
     }
 
-    // handle put request of uploading image
-    public StatusResponse<String> upload(Request req, Response res) {
-        res.type("application/json");
-
-        // make sure logged in
-        Integer uid = req.session().attribute("uid");
-        if(uid==null)
-            return new StatusResponse<>(STATUS_NOT_LOGGED_IN);
-
-        // get file data
+    /**
+     * Handle put request of uploading image
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      newly uploaded photo uri
+     * @throws HttpMessageException on failure
+     */
+    public String upload(Request req, Response res) throws HttpMessageException {
+        int uid = req.session().attribute("uid");
         return photoService.upload(req.contentType(), req.bodyAsBytes(), req.params("photouri"), uid);
     }
 
     // show all photos owned by user
-    public StatusResponse<List<Photo>> getUserPhotos(Request req, Response res) {
-        res.type("application/json");
 
-        // make sure logged in
-        Integer uid = req.session().attribute("uid");
-        if(uid==null)
-            return new StatusResponse<>(STATUS_NOT_LOGGED_IN);
-
-        // get all photos
+    /**
+     * Show all photos owned by user
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      list of photo objects on success
+     * @throws HttpMessageException on failure
+     */
+    public List<Photo> getUserPhotos(Request req, Response res) throws HttpMessageException {
+        int uid = req.session().attribute("uid");
         return photoService.getUserPhotos(uid);
     }
 
-    // update image attributes
-    public StatusResponse update(Request req, Response res) {
-        res.type("application/json");
-
-        // TODO: @tiffany implement this in service layer
-        // photoService.updateImage();
-
+    /**
+     * Update image attributes
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(Request req, Response res) throws HttpMessageException {
         // TODO: working here
-        return null;
+        // photoService.updateImage();
+        return false;
     }
 }

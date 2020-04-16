@@ -27,30 +27,18 @@ public class UserHandler {
      * @throws HttpMessageException on error
      */
     public boolean signUp(Request req, Response res) throws HttpMessageException {
-        // TODO: remove
-//        StatusResponse status;
-
         if(req.session().attribute("uid")!=null)
             throw new HttpMessageException(400, LOGGED_IN);
-            //TODO: remove
-//            return new StatusResponse(STATUS_LOGGED_IN);
 
         try {
             SignupRequest signupRequest = gson.fromJson(req.body(), SignupRequest.class);
             if(signupRequest==null || !signupRequest.isValid())
                 throw new JsonParseException("Invalid signup request");
 
-            // TODO: remove
-//            if((status=userService.signUp(signupRequest.toServiceType())).status() != STATUS_OK)
-//                return status;
-
             int uid = userService.signUp(signupRequest.toServiceType());
 
             req.session().invalidate();
             req.session(true).attribute("uid", uid);
-
-            // TODO: remove; for debugging
-            System.out.printf("UID %d signed up.%n", uid);
 
             return true;
         } catch(JsonParseException e) {
@@ -66,11 +54,7 @@ public class UserHandler {
      * @throws HttpMessageException on error
      */
     public boolean logIn(Request req, Response res) throws HttpMessageException {
-        // TODO: remove
-//        StatusResponse status;
         if(req.session().attribute("uid")!=null)
-            // TODO: remove
-//            return new StatusResponse(STATUS_LOGGED_IN);
             throw new HttpMessageException(401, HttpMessageException.Error.LOGGED_IN);
 
         try {
@@ -78,21 +62,13 @@ public class UserHandler {
             if(loginRequest==null || !loginRequest.isValid())
                 throw new JsonParseException("Invalid signup request");
 
-//            if((status=userService.logIn(loginRequest.toServiceType())).status() != STATUS_OK)
-//                return status;
             int uid = userService.logIn(loginRequest.toServiceType());
-
-            // TODO: remove; for debugging
-            System.out.printf("UID %d logged in.%n", uid);
 
             req.session().invalidate();
             req.session(true).attribute("uid", uid);
             req.session().attribute("username", loginRequest.toServiceType().username);
             return true;
         } catch (JsonParseException e) {
-            // TODO: remove
-//            res.status(400);
-//            return new StatusResponse(STATUS_HTTP_ERROR);
             throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
         }
     }
@@ -104,9 +80,6 @@ public class UserHandler {
      * @return      true on success
      */
     public boolean logOut(Request req, Response res) {
-        // TODO: remove; for debugging
-        System.out.printf("UID %d logged out.%n", (int) req.session().attribute("uid"));
-
         req.session().invalidate();
         return true;
     }
@@ -119,9 +92,6 @@ public class UserHandler {
      */
     public String userDetails(Request req, Response res) {
         res.type("application/json");
-
-        // TODO: remove
-//        return new StatusResponse<>(STATUS_OK, req.session().attribute("username"));
         return req.session().attribute("username");
     }
 

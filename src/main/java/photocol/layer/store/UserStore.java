@@ -34,15 +34,11 @@ public class UserStore {
             ResultSet rs = stmt.getGeneratedKeys();
             rs.next();
             return rs.getInt("uid");
-            // TODO: remove
-//            return new StatusResponse<>(STATUS_OK, rs.getInt(1));
         } catch(SQLIntegrityConstraintViolationException err) {
             // unique contraint violated (username not unique)
             throw new HttpMessageException(401, CREDENTIALS_NOT_UNIQUE);
         } catch (SQLException err) {
             err.printStackTrace();
-            // TODO: remove
-//            return new StatusResponse<>(STATUS_USER_NOT_CREATED);
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
@@ -59,13 +55,9 @@ public class UserStore {
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
 
-            // TODO: remove
-//            return new StatusResponse(rs.next() ? STATUS_OK : STATUS_USER_NOT_FOUND);
             return rs.next();
         } catch (SQLException err){
             err.printStackTrace();
-            // TODO: remove
-//            return new StatusResponse(STATUS_USER_NOT_FOUND);
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
@@ -85,17 +77,11 @@ public class UserStore {
             // TODO: implement more advanced check w/ one-way hashing
             rs.next();
             if(rs.getString(2).equals(user.passwordHash))
-                // TODO: remove
-//                return new StatusResponse<>(STATUS_OK, rs.getInt(1));
                 return rs.getInt("uid");
 
-            // TODO: remove
-//            return new StatusResponse<>(STATUS_CREDENTIALS_INVALID);
             throw new HttpMessageException(401, CREDENTIALS_INVALID);
         } catch(SQLException err) {
             err.printStackTrace();
-            // TODO: remove
-//            return new StatusResponse<>(STATUS_CREDENTIALS_INVALID);
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
@@ -113,16 +99,12 @@ public class UserStore {
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
-                // TODO: remove
-//                return new StatusResponse<>(STATUS_USER_NOT_FOUND);
                 throw new HttpMessageException(401, USER_NOT_FOUND);
 
 //            return new StatusResponse<>(STATUS_OK, rs.getInt("uid"));
             return rs.getInt("uid");
-        } catch(Exception err) {
+        } catch(SQLException err) {
             err.printStackTrace();
-            // TODO: remove
-//            return new StatusResponse<>(STATUS_USER_NOT_FOUND);
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }

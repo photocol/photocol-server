@@ -28,11 +28,6 @@ public class CollectionStore {
      */
     public List<PhotoCollection> getUserCollections(int uid, String username) throws HttpMessageException {
         try {
-            // TODO: remove old query
-//            PreparedStatement stmt = conn.prepareStatement("SELECT pub, name, uri, role FROM collection " +
-//                    "INNER JOIN acl ON collection.cid=acl.cid " +
-//                    "INNER JOIN user ON user.uid=acl.uid " +
-//                    "WHERE acl.uid=?");
             PreparedStatement stmt = conn.prepareStatement("SELECT username as owner, pub, name, uri, acl1.role " +
                     "FROM collection " +
                     "INNER JOIN acl AS acl1 ON collection.cid=acl1.cid " +
@@ -69,13 +64,6 @@ public class CollectionStore {
     public int checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri)
             throws HttpMessageException {
         try {
-            // TODO: remove old query
-//            PreparedStatement stmt = conn.prepareStatement("SELECT collection.cid FROM collection " +
-//                    "INNER JOIN acl ON collection.cid=acl.cid WHERE acl.uid=? AND acl.role=? AND collection.uri=?");
-//            stmt.setInt(1, collectionOwnerUid);
-//            stmt.setInt(2, 0);
-//            stmt.setString(3, collectionUri);
-
             PreparedStatement stmt = conn.prepareStatement("SELECT collection.cid, uid FROM collection " +
                     "INNER JOIN acl ON collection.cid=acl.cid " +
                     "WHERE ((uid=? and role=?) or uid=?) AND collection.uri=?");

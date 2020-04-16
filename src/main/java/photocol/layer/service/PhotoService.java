@@ -53,12 +53,6 @@ public class PhotoService {
             randUri = String.valueOf(Math.random()).substring(2);
         } while(photoStore.checkIfPhotoExists(randUri));
 
-        // TODO: remove
-//        StatusResponse status = s3.putObject(data, randUri+"."+ext);
-//        if(status.status() != STATUS_OK) {
-//            s3.deleteObject(randUri+"."+ext);
-//            return status;
-//        }
         String newUri = randUri + "." + ext;
         s3.putObject(data, newUri);
         photoStore.createImage(newUri, imageuri, uid);
@@ -75,9 +69,6 @@ public class PhotoService {
      */
     public ResponseInputStream<GetObjectResponse> permalink(String uri, int uid)
             throws HttpMessageException {
-        // TODO: remove
-//        if(photoStore.checkPhotoPermissions(uri, uid).status()!=STATUS_OK)
-//            return new StatusResponse<>(STATUS_IMAGE_NOT_FOUND);
         photoStore.checkPhotoPermissions(uri, uid);
         return s3.getObject(uri);
     }

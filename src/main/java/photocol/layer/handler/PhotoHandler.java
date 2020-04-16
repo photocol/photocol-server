@@ -38,17 +38,9 @@ public class PhotoHandler {
 
         int uid = req.session().attribute("uid");
 
-        // TODO: remove
-//        StatusResponse<ResponseInputStream<GetObjectResponse>> status;
-//        if((status=photoService.permalink(uri, uid)).status()!=STATUS_OK) {
-//            res.status(404);
-//            return gson.toJson(new StatusResponse<>(STATUS_IMAGE_NOT_FOUND));
-//        }
         ResponseInputStream<GetObjectResponse> response = photoService.permalink(uri, uid);
 
         // caching with etags
-        // TODO: remove
-//        ResponseInputStream<GetObjectResponse> response = status.payload();
         eTag = response.response().eTag();
         if (conditionalHeader != null && conditionalHeader.equals(eTag)) {
             res.status(304);
@@ -95,7 +87,6 @@ public class PhotoHandler {
      */
     public boolean update(Request req, Response res) throws HttpMessageException {
         // TODO: working here
-        // photoService.updateImage();
         return false;
     }
 }

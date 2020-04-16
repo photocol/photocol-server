@@ -66,7 +66,7 @@ public class PhotoStore {
      * Check to see if user owns photo or has access to a collection that contains the photo, returning pid on success.
      * @param uri   uri of photo
      * @param uid   uid of photo owner
-     * @return
+     * @return      pid on success
      * @throws HttpMessageException
      */
     public int checkPhotoPermissions(String uri, int uid) throws HttpMessageException {
@@ -94,11 +94,11 @@ public class PhotoStore {
 
             rs = stmt.executeQuery();
             if(!rs.next())
-                throw new HttpMessageException(401, IMAGE_NOT_FOUND);
+                throw new HttpMessageException(404, IMAGE_NOT_FOUND);
 
             // success
             return rs.getInt("pid");
-        } catch(Exception err) {
+        } catch(SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }

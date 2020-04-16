@@ -74,8 +74,6 @@ public class PhotoHandler {
         return photoService.upload(req.contentType(), req.bodyAsBytes(), req.params("photouri"), uid);
     }
 
-    // show all photos owned by user
-
     /**
      * Show all photos owned by user
      * @param req   spark request object

@@ -3,9 +3,10 @@ package photocol.layer.store;
 import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
-import photocol.definitions.response.StatusResponse;
-import static photocol.definitions.response.StatusResponse.Status.*;
+import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.DataBase.Method.InitDB;
+
+import static photocol.definitions.exception.HttpMessageException.Error.*;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -18,8 +19,14 @@ public class CollectionStore {
         this.conn = new InitDB().initialDB("photocol");
     }
 
-    // get all collections that user has permissions to
-    public StatusResponse<List<PhotoCollection>> getUserCollections(int uid, String username) {
+    /**
+     * Get all collections that user has permissions to access
+     * @param uid       uid of accessor
+     * @param username  username of user
+     * @return          list of collections accessible by user
+     * @throws HttpMessageException on failure
+     */
+    public List<PhotoCollection> getUserCollections(int uid, String username) throws HttpMessageException {
         try {
             // TODO: remove old query
 //            PreparedStatement stmt = conn.prepareStatement("SELECT pub, name, uri, role FROM collection " +
@@ -44,17 +51,25 @@ public class CollectionStore {
 
                 photoCollections.add(new PhotoCollection(rs.getBoolean("pub"), rs.getString("name"), aclList));
             }
-            return new StatusResponse<>(STATUS_OK, photoCollections);
-        } catch(Exception err) {
+            return photoCollections;
+        } catch(SQLException err) {
             err.printStackTrace();
-            return new StatusResponse<>(STATUS_MISC);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // check if collection exists and is viewable by uid; return cid if it does; actually checks uri, not name
-    public StatusResponse<Integer> checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri) {
+    /**
+     * Check if collection exists and is viewable by uid; return cid if it does or -1 if not
+     * @param uid                   uid of viewer
+     * @param collectionOwnerUid    collection owner uid
+     * @param collectionUri         collection uri
+     * @return                      cid if exists; -1 if not
+     * @throws HttpMessageException on failure
+     */
+    public int checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri)
+            throws HttpMessageException {
         try {
-            // OLD QUERY: remove later
+            // TODO: remove old query
 //            PreparedStatement stmt = conn.prepareStatement("SELECT collection.cid FROM collection " +
 //                    "INNER JOIN acl ON collection.cid=acl.cid WHERE acl.uid=? AND acl.role=? AND collection.uri=?");
 //            stmt.setInt(1, collectionOwnerUid);
@@ -71,7 +86,7 @@ public class CollectionStore {
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
-                return new StatusResponse<>(STATUS_COLLECTION_NOT_FOUND);
+                return -1;
 
             // check that both uid and collectionOwnerUid are in the returned set
             // TODO: very janky but no time -- fix this and maybe query later
@@ -84,26 +99,34 @@ public class CollectionStore {
                 if(rs.getInt("uid")==collectionOwnerUid) collectionOwnerUidFound = true;
             }
 
-            return new StatusResponse<>(STATUS_OK, cid);
-        } catch(Exception err) {
+            return cid;
+        } catch(SQLException err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_COLLECTION_NOT_FOUND);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // insert collection into db
-    public StatusResponse createCollection(int uid, PhotoCollection collection) {
+    /**
+     * Insert collection into db
+     * @param uid           uid of owner
+     * @param collection    photocollection object
+     * @return              true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean createCollection(int uid, PhotoCollection collection) throws HttpMessageException {
         try {
-            PreparedStatement stmt1 = conn.prepareStatement("INSERT INTO collection (name, pub, uri) VALUES (?, ?, ?);",
+            PreparedStatement stmt1 = conn.prepareStatement("INSERT INTO collection (name, pub, uri) " +
+                            "VALUES (?, ?, ?);",
                     Statement.RETURN_GENERATED_KEYS);
             stmt1.setString(1, collection.name);
             stmt1.setBoolean(2, collection.isPublic);
             stmt1.setString(3, collection.uri);
             stmt1.executeUpdate();
 
+            // TODO: check that these validations are correct (i.e., duplicate checks)
             ResultSet keyResultSet = stmt1.getGeneratedKeys();
             if(!keyResultSet.next())
-                return new StatusResponse(STATUS_COLLECTION_NAME_INVALID);
+                throw new HttpMessageException(401, COLLECTION_NAME_INVALID);
             int cid = keyResultSet.getInt("cid");
 
             PreparedStatement stmt2 = conn.prepareStatement("INSERT INTO acl (cid, uid, role) VALUES (?, ?, ?);");
@@ -112,15 +135,20 @@ public class CollectionStore {
             stmt2.setInt(3, ACLEntry.Role.ROLE_OWNER.toInt());
             stmt2.executeUpdate();
 
-            return new StatusResponse(STATUS_OK);
-        } catch(Exception err) {
+            return true;
+        } catch(SQLException err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_COLLECTION_NAME_INVALID);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // get photos in collection
-    public StatusResponse<List<Photo>> getCollectionPhotos(int cid) {
+    /**
+     * Get photos in collection
+     * @param cid   collection cid
+     * @return      list of photo objects from collection
+     * @throws HttpMessageException on failure
+     */
+    public List<Photo> getCollectionPhotos(int cid) throws HttpMessageException {
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photo " +
                     "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.cid=?");
@@ -131,15 +159,21 @@ public class CollectionStore {
             while(rs.next())
                 photoList.add(new Photo(rs.getString("uri"), rs.getString("description"), rs.getDate("upload_date")));
 
-            return new StatusResponse(STATUS_OK, photoList);
-        } catch(Exception err) {
+            return photoList;
+        } catch(SQLException err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_COLLECTION_NOT_FOUND);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // get user's access role in a collection
-    public StatusResponse<Integer> getUserCollectionRole(int uid, int cid) {
+    /**
+     * Check if user has access to collection; return role if applicable.
+     * @param uid   accessor uid
+     * @param cid   collection cid
+     * @return      role if user has access
+     * @throws HttpMessageException on failure or if user doesn't have access
+     */
+    public int getUserCollectionRole(int uid, int cid) throws HttpMessageException {
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT role FROM acl WHERE uid=? AND cid=?");
             stmt.setInt(1, uid);
@@ -147,17 +181,23 @@ public class CollectionStore {
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
-                return new StatusResponse<>(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
+                throw new HttpMessageException(401, INSUFFICIENT_COLLECTION_PERMISSIONS);
 
-            return new StatusResponse<>(STATUS_OK, rs.getInt("role"));
-        } catch(Exception err) {
+            return rs.getInt("role");
+        } catch(SQLException err) {
             err.printStackTrace();
-            return new StatusResponse<>(STATUS_INSUFFICIENT_COLLECTION_PERMISSIONS);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // add photo to collection
-    public StatusResponse addImage(int cid, int pid) {
+    /**
+     * Add photo to collection
+     * @param cid   collection cid
+     * @param pid   photo pid
+     * @return      true on success
+     * @throws HttpMessageException on failure on failure on failure on failure
+     */
+    public boolean addImage(int cid, int pid) throws HttpMessageException {
         try {
             // try to insert image; will fail if not unique
             PreparedStatement stmt = conn.prepareStatement("INSERT INTO icj (cid, pid) VALUES (?, ?);");
@@ -165,18 +205,24 @@ public class CollectionStore {
             stmt.setInt(2, pid);
 
             stmt.executeUpdate();
-            return new StatusResponse(STATUS_OK);
+            return true;
         } catch(SQLIntegrityConstraintViolationException err) {
             // image already exists in collection
-            return new StatusResponse(STATUS_IMAGE_EXISTS_IN_COLLECTION);
-        } catch(Exception err) {
+            throw new HttpMessageException(401, IMAGE_EXISTS_IN_COLLECTION);
+        } catch(SQLException err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_MISC);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
-    // update collection
-    public StatusResponse update(int cid, PhotoCollection photoCollection) {
+    /**
+     * Update collection attributes or acl
+     * @param cid               collection cid
+     * @param photoCollection   attributes to change
+     * @return                  true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(int cid, PhotoCollection photoCollection) throws HttpMessageException {
         try {
             // update name and uri
             if (photoCollection.name != null && photoCollection.name.length() > 0) {
@@ -210,14 +256,14 @@ public class CollectionStore {
                 conn.setAutoCommit(true);
             }
 
-            return new StatusResponse(STATUS_OK);
+            return true;
         } catch(SQLIntegrityConstraintViolationException err) {
             // if try to insert duplicate acl records for same db; this will be eliminated when stricter checks
             // on ACL list on service layer are implemented
-            return new StatusResponse(STATUS_MISC);
-        } catch(Exception err) {
+            throw new HttpMessageException(401, COLLECTION_NAME_INVALID);
+        } catch(SQLException err) {
             err.printStackTrace();
-            return new StatusResponse(STATUS_MISC);
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 }

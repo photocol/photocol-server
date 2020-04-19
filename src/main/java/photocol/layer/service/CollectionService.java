@@ -205,4 +205,24 @@ public class CollectionService {
         // update collection with parameters
         return collectionStore.update(cid, photoCollection);
     }
+
+    /**
+     * Delete a collection and all images within it
+     * @param uid           uid of owner
+     * @param collectionUri collection uri
+     * @return              true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean deleteCollection(int uid, String collectionUri) throws HttpMessageException {
+
+        int cid = collectionStore.checkIfCollectionExists(uid, uid, collectionUri);
+        if(cid==-1)
+            throw new HttpMessageException(401, COLLECTION_NOT_FOUND);
+
+        ACLEntry.Role role = ACLEntry.Role.fromInt(collectionStore.getUserCollectionRole(uid, cid));
+        if(role != ACLEntry.Role.ROLE_OWNER)
+            throw new HttpMessageException(401, INSUFFICIENT_COLLECTION_PERMISSIONS, "NOT COLLECTION OWNER");
+
+        return collectionStore.deleteCollection(cid);
+    }
 }

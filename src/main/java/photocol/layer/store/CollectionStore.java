@@ -254,9 +254,9 @@ public class CollectionStore {
             if (photoCollection.aclList.size() > 0) {
                 conn.setAutoCommit(false);
 
-                final PreparedStatement insertStmt = conn.prepareStatement("INSERT INTO acl (cid, uid, role) VALUES (?, ?, ?)");
-                final PreparedStatement updateStmt = conn.prepareStatement("UPDATE acl SET role=? WHERE cid=? AND uid=?");
-                final PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM acl WHERE cid=? and uid=?");
+                PreparedStatement insertStmt = conn.prepareStatement("INSERT INTO acl (cid, uid, role) VALUES (?, ?, ?)");
+                PreparedStatement updateStmt = conn.prepareStatement("UPDATE acl SET role=? WHERE cid=? AND uid=?");
+                PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM acl WHERE cid=? and uid=?");
 
                 for (ACLEntry entry : photoCollection.aclList) {
                     // shouldn't happen, just an extra check to prevent NullPointerException
@@ -307,6 +307,28 @@ public class CollectionStore {
             // if try to insert duplicate acl records for same db; this will be eliminated when stricter checks
             // on ACL list on service layer are implemented
             throw new HttpMessageException(401, COLLECTION_NAME_INVALID);
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Delete collection and all photos associated with it. Assuming permissions of deleter already verified.
+     * @param cid   cid of collection to delete
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean deleteCollection(int cid) throws HttpMessageException {
+        try {
+            PreparedStatement stmt = conn.prepareStatement("DELETE collection, icj, acl FROM collection " +
+                    "LEFT JOIN icj ON icj.cid=collection.cid " +
+                    "LEFT JOIN acl ON acl.cid=collection.cid " +
+                    "WHERE collection.cid=?");
+            stmt.setInt(1, cid);
+            stmt.executeUpdate();
+
+            return true;
         } catch(SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);

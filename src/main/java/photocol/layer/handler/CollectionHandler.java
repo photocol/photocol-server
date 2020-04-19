@@ -114,4 +114,27 @@ public class CollectionHandler {
         return collectionService.addRemovePhoto(uid, collectionUri, collectionOwner, photoUri, isAdd);
     }
 
+    /**
+     * Delete a collection and all images within it
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean deleteCollection(Request req, Response res) throws HttpMessageException {
+        // TODO: possible that username session variable is wrong
+        //       maybe implement Redis for sessions later
+        String username = req.session().attribute("username");
+        int uid = req.session().attribute("uid");
+
+        String collectionUri = req.params("collectionuri");
+        String collectionOwner = req.params("username");
+
+        // make sure collection owner is self
+        if(!collectionOwner.equals(username))
+            throw new HttpMessageException(401, INSUFFICIENT_COLLECTION_PERMISSIONS, "NOT COLLECTION OWNER");
+
+        return collectionService.deleteCollection(uid, collectionUri);
+    }
+
 }

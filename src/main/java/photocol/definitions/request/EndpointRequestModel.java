@@ -15,7 +15,7 @@ public class EndpointRequestModel {
         T toServiceType();
     }
 
-    // endpoint: POST /signup
+    // endpoint: POST /user/signup
     public static class SignupRequest implements EndpointRequest<User> {
         public String username;
         public String email;
@@ -33,7 +33,7 @@ public class EndpointRequestModel {
         }
     }
 
-    // endpoint: POST /login
+    // endpoint: POST /user/login
     public static class LoginRequest implements EndpointRequest<User> {
         public String username;
         public String passwordHash;

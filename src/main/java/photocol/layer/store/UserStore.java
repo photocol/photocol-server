@@ -99,9 +99,8 @@ public class UserStore {
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
-                throw new HttpMessageException(401, USER_NOT_FOUND);
+                throw new HttpMessageException(401, USER_NOT_FOUND, username);
 
-//            return new StatusResponse<>(STATUS_OK, rs.getInt("uid"));
             return rs.getInt("uid");
         } catch(SQLException err) {
             err.printStackTrace();

@@ -6,11 +6,13 @@ import photocol.definitions.PhotoCollection;
 import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.DataBase.Method.InitDB;
 
+import static photocol.definitions.ACLEntry.ACLOperation.*;
 import static photocol.definitions.exception.HttpMessageException.Error.*;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class CollectionStore {
 
@@ -204,6 +206,29 @@ public class CollectionStore {
     }
 
     /**
+     * Get acl list (for checking permissions on update)
+     * @param cid   collection cid
+     * @return      list of aclentry objects
+     * @throws HttpMessageException on error
+     */
+    public List<ACLEntry> getAclList(int cid) throws HttpMessageException {
+        try {
+            // create a map of current acl list to perform checks against
+            PreparedStatement stmt = conn.prepareStatement("SELECT uid, role FROM acl WHERE cid=?");
+            stmt.setInt(1, cid);
+            ResultSet rs = stmt.executeQuery();
+
+            List<ACLEntry> aclList = new ArrayList<>();
+            while(rs.next())
+                aclList.add(new ACLEntry(rs.getInt("uid"), rs.getInt("role")));
+
+            return aclList;
+        } catch(SQLException err) {
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
      * Update collection attributes or acl
      * @param cid               collection cid
      * @param photoCollection   attributes to change
@@ -212,7 +237,7 @@ public class CollectionStore {
      */
     public boolean update(int cid, PhotoCollection photoCollection) throws HttpMessageException {
         try {
-            // update name and uri
+            // update name and uri, if specified
             if (photoCollection.name != null && photoCollection.name.length() > 0) {
                 PreparedStatement stmt = conn.prepareStatement("UPDATE collection SET name=?, uri=? WHERE cid=?");
                 stmt.setString(1, photoCollection.name);
@@ -225,21 +250,48 @@ public class CollectionStore {
             if (photoCollection.aclList.size() > 0) {
                 conn.setAutoCommit(false);
 
+                final PreparedStatement insertStmt = conn.prepareStatement("INSERT INTO acl (cid, uid, role) VALUES (?, ?, ?)");
+                final PreparedStatement updateStmt = conn.prepareStatement("UPDATE acl SET role=? WHERE cid=? AND uid=?");
+                final PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM acl WHERE cid=? and uid=?");
+
                 for (ACLEntry entry : photoCollection.aclList) {
-                    PreparedStatement stmt;
-                    if (entry.role != ACLEntry.Role.ROLE_NONE) {
-                        stmt = conn.prepareStatement("INSERT INTO acl (cid, uid, role) VALUES (?, ?, ?)");
-                        stmt.setInt(1, cid);
-                        stmt.setInt(2, entry.uid);
-                        stmt.setInt(3, entry.role.toInt());
-                    } else {
-                        stmt = conn.prepareStatement("REMOVE FROM acl WHERE cid=? AND uid=?");
-                        stmt.setInt(1, cid);
-                        stmt.setInt(2, entry.uid);
+                    // shouldn't happen, just an extra check to prevent NullPointerException
+                    if(entry.operation==null)
+                        throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "UNRECOGNIZED ACL ACTION");
+
+                    if(entry.operation==OP_INSERT || entry.operation==OP_INSERT_OWNER) {
+                        insertStmt.setInt(1, cid);
+                        insertStmt.setInt(2, entry.uid);
+                        insertStmt.setInt(3, entry.role.toInt());
+                        insertStmt.addBatch();
                     }
-                    stmt.executeUpdate();
+
+                    if(entry.operation==OP_UPDATE || entry.operation==OP_UPDATE_OWNER) {
+                        updateStmt.setInt(2, cid);
+                        updateStmt.setInt(3, entry.uid);
+                        updateStmt.setInt(1, entry.role.toInt());
+                        updateStmt.addBatch();
+                    }
+
+                    if(entry.operation==OP_DELETE) {
+                        deleteStmt.setInt(1, cid);
+                        deleteStmt.setInt(2, entry.uid);
+                        deleteStmt.addBatch();
+                    }
+
+                    // make self a viewer if new owner promoted
+                    if(entry.operation==OP_UPDATE_OWNER || entry.operation==OP_INSERT_OWNER) {
+                        updateStmt.setInt(2, cid);
+                        updateStmt.setInt(3, entry.uid);
+                        updateStmt.setInt(1, ACLEntry.Role.ROLE_VIEWER.toInt());
+                        updateStmt.addBatch();
+                    }
                 }
 
+                // execute all queries at once; rollback all if any fail
+                insertStmt.executeBatch();
+                updateStmt.executeBatch();
+                deleteStmt.executeBatch();
                 conn.commit();
                 conn.setAutoCommit(true);
             }

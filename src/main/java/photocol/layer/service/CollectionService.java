@@ -8,7 +8,9 @@ import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
 import photocol.layer.store.UserStore;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static photocol.definitions.exception.HttpMessageException.Error.*;
 
@@ -138,11 +140,65 @@ public class CollectionService {
         if(role != ACLEntry.Role.ROLE_OWNER)
             throw new HttpMessageException(401, INSUFFICIENT_COLLECTION_PERMISSIONS);
 
-        // TODO: enforce strict checks on ACL list
+        // checking acl list
+        if(photoCollection.aclList.size() > 0) {
+            // validating all acl list changes
+            // this checks that no duplicates are added, that no deletions of non-existant users are performed, and
+            // that the current user has sufficient permissions to perform deletion actions
+            List<ACLEntry> aclList = collectionStore.getAclList(cid);
+            Map<Integer, ACLEntry.Role> aclMap = new HashMap<>();
+            for(ACLEntry acl : aclList)
+                aclMap.put(acl.uid, acl.role);
 
-        // get list of uids from usernames
-        for(ACLEntry entry : photoCollection.aclList)
-            entry.setUid(userStore.getUid(entry.username));
+            for(ACLEntry entry : photoCollection.aclList) {
+                entry.setUid(userStore.getUid(entry.username));
+
+                // check that role is not self -- i.e., not current owner
+                // current owner can only change acl list of other users
+                // to leave, must promote another user to owner and then leave using normal leave collection operation
+                if(entry.uid==uid)
+                    throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "CANNOT PERFORM ACL ACTION ON SELF");
+
+                // duplicate acl action on one user not allowed
+                if(entry.operation!=null)
+                    throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "DUPLICATE OPERATIONS ON " + entry.username);
+
+                // promoting someone else to owner, will automatically demote self
+                if(entry.role==ACLEntry.Role.ROLE_OWNER) {
+                    // check that no other role is also set to owner
+                    for(ACLEntry ownerCheck : photoCollection.aclList)
+                        if(ownerCheck.role==ACLEntry.Role.ROLE_OWNER)
+                            throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "MULTIPLE OWNERS SET");
+
+                    entry.setOperation(aclMap.containsKey(entry.uid)
+                            ? ACLEntry.ACLOperation.OP_UPDATE_OWNER
+                            : ACLEntry.ACLOperation.OP_INSERT_OWNER);
+                    aclMap.put(entry.uid, entry.role);
+                }
+
+                // removing user, checks if already exists in acl list
+                if(entry.role==ACLEntry.Role.ROLE_NONE) {
+                    if(!aclMap.containsKey(entry.uid))
+                        throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "REMOVING USER NOT IN COLLECTION");
+
+                    entry.setOperation(ACLEntry.ACLOperation.OP_DELETE);
+                    aclMap.put(entry.uid, entry.role);
+                }
+
+                // setting user to another role
+                if(entry.role==ACLEntry.Role.ROLE_VIEWER || entry.role==ACLEntry.Role.ROLE_EDITOR) {
+                    // (does't check if role doesn't change, no problem if it doesn't)
+                    entry.setOperation(aclMap.containsKey(entry.uid)
+                            ? ACLEntry.ACLOperation.OP_UPDATE
+                            : ACLEntry.ACLOperation.OP_INSERT);
+                    aclMap.put(entry.uid, entry.role);
+                }
+
+                // shouldn't happen, just a check that the above conditionals cover all possible cases
+                if(entry.operation==null)
+                    throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "UNRECOGNIZED ACL ACTION");
+            }
+        }
 
         // update collection with parameters
         return collectionStore.update(cid, photoCollection);

@@ -104,7 +104,7 @@ public class CollectionHandler {
         String[] uriComponents = req.uri().split("/");
         boolean isAdd = uriComponents[uriComponents.length-1].toLowerCase().equals("addphoto");
 
-        AddImageRequest addRequest = gson.fromJson(req.body(), AddImageRequest.class);
+        PhotoUriRequest addRequest = gson.fromJson(req.body(), PhotoUriRequest.class);
         String collectionUri = req.params("collectionuri");
         String collectionOwner = req.params("username");
         if(collectionUri==null || collectionOwner==null || addRequest==null || !addRequest.isValid())

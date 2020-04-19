@@ -84,8 +84,9 @@ public class EndpointRequestModel {
         }
     }
 
-    // endpoint: POST /collection/:collectioname/addimage
-    public static class AddImageRequest implements EndpointRequest<String> {
+    // endpoints: POST /collection/:collectioname/addphoto,
+    //            POST /collection/:collectionname/removephoto
+    public static class PhotoUriRequest implements EndpointRequest<String> {
         public String uri;
 
         @Override

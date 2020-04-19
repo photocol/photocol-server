@@ -64,12 +64,13 @@ public class PhotoStore {
 
     /**
      * Check to see if user owns photo or has access to a collection that contains the photo, returning pid on success.
+     * If checkOwner is set to true, will throw an exception if user is not the owner.
      * @param uri   uri of photo
-     * @param uid   uid of photo owner
+     * @param uid   uid of user attempting to access photo
      * @return      pid on success
      * @throws HttpMessageException on failure
      */
-    public int checkPhotoPermissions(String uri, int uid) throws HttpMessageException {
+    public int checkPhotoPermissions(String uri, int uid, boolean checkOwner) throws HttpMessageException {
         try {
             // check if user owns the photo
             PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uid=? AND uri=?");
@@ -79,6 +80,9 @@ public class PhotoStore {
             ResultSet rs = stmt.executeQuery();
             if(rs.next())
                 return rs.getInt("pid");
+
+            if(checkOwner)
+                throw new HttpMessageException(401, NOT_PHOTO_OWNER);
 
             // check if user is in one of the collections that contains the photo
             // TODO: check if this join is actually correct; not sure how to use joins
@@ -126,6 +130,29 @@ public class PhotoStore {
             // this should never happen
             if(stmt.executeUpdate()<1)
                 throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+
+            return true;
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Deletes user photo. Assumes that it has already been checked that user owns photo.
+     * @param pid   photo pid
+     * @return      true on success
+     * @throws HttpMessageException on error or not owner
+     */
+    public boolean deletePhoto(int pid) throws HttpMessageException {
+        try {
+
+            // TODO: change this to foreign keys, use foreign key cascading
+            //       see: mysqltutorial.org/mysql-on-delete-cascade
+            PreparedStatement stmt = conn.prepareStatement("DELETE photo, icj FROM photo " +
+                    "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.pid=?");
+            stmt.setInt(1, pid);
+            stmt.executeUpdate();
 
             return true;
         } catch(SQLException err) {

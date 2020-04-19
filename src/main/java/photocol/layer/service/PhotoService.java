@@ -69,17 +69,37 @@ public class PhotoService {
      */
     public ResponseInputStream<GetObjectResponse> permalink(String uri, int uid)
             throws HttpMessageException {
-        photoStore.checkPhotoPermissions(uri, uid);
+        photoStore.checkPhotoPermissions(uri, uid, false);
         return s3.getObject(uri);
     }
 
     /**
-     * Get user photos (simple passthrough).
+     * Get user photos (simple passthrough)
      * @param uid   uid of user to get photos of
      * @return      list of photo objects
      * @throws HttpMessageException on failure
      */
     public List<Photo> getUserPhotos(int uid) throws HttpMessageException {
         return photoStore.getUserPhotos(uid);
+    }
+
+    /**
+     * Delete a photo from account
+     * @param uri   photo uri
+     * @param uid   uid of owner
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean deletePhoto(String uri, int uid) throws HttpMessageException {
+        // get pid and checks if user is owner of photo
+        int pid = photoStore.checkPhotoPermissions(uri, uid, true);
+
+        // remove from image and icj tables (fails if not owner)
+        photoStore.deletePhoto(pid);
+
+        // delete from S3
+        s3.deleteObject(uri);
+
+        return true;
     }
 }

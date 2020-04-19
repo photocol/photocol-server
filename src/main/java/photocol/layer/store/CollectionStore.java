@@ -281,6 +281,8 @@ public class CollectionStore {
                         deleteStmt.setInt(1, cid);
                         deleteStmt.setInt(2, entry.uid);
                         deleteStmt.addBatch();
+
+                        // TODO: remove all photos in collection owned by the person?
                     }
 
                     // make self a viewer if new owner promoted

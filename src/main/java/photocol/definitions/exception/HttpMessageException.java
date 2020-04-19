@@ -27,7 +27,8 @@ public class HttpMessageException extends Exception {
         IMAGE_DESCRIPTION_INVALID,
         IMAGE_NOT_FOUND,
         IMAGE_EXISTS_IN_COLLECTION,
-        ILLEGAL_ACL_ACTION
+        ILLEGAL_ACL_ACTION,
+        NOT_PHOTO_OWNER
     }
 
     public HttpMessageException(int status, Error error, String details) {

@@ -40,8 +40,9 @@ public class Endpoints {
 
             get("/currentuser", photoHandler::getUserPhotos, gson::toJson);
             path("/:photouri", () -> {
-                put("/upload", photoHandler::upload, gson::toJson);
+                put("", photoHandler::upload, gson::toJson);
                 post("/update", photoHandler::update, gson::toJson);
+                delete("", photoHandler::delete, gson::toJson);
             });
         });
 
@@ -52,7 +53,7 @@ public class Endpoints {
             get("/currentuser", collectionHandler::getUserCollections, gson::toJson);
             post("/new", collectionHandler::createCollection, gson::toJson);
             path("/:username/:collectionuri", () -> {
-                get("/", collectionHandler::getCollection, gson::toJson);
+                get("", collectionHandler::getCollection, gson::toJson);
                 post("/update", collectionHandler::updateCollection, gson::toJson);
                 post("/addphoto", collectionHandler::addRemovePhoto, gson::toJson);
                 post("/removephoto", collectionHandler::addRemovePhoto, gson::toJson);

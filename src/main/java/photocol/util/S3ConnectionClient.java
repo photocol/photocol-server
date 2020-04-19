@@ -55,8 +55,25 @@ public class S3ConnectionClient {
                     RequestBody.fromBytes(data));
 
             return true;
-        } catch(S3Exception exception) {
-            exception.printStackTrace();
+        } catch(S3Exception err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, S3_ERROR);
+        }
+    }
+
+    /**
+     * Delete image from s3
+     * @param uri   photouri of image
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean deleteObject(String uri) throws HttpMessageException {
+        try {
+            s3.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(uri).build());
+
+            return true;
+        } catch(S3Exception err) {
+            err.printStackTrace();
             throw new HttpMessageException(500, S3_ERROR);
         }
     }

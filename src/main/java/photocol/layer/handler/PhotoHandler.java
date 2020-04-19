@@ -89,4 +89,16 @@ public class PhotoHandler {
         // TODO: working here
         return false;
     }
+
+    /**
+     * Delete image from account
+     * (For removing an image from a collection, see CollectionHandler::addRemovePhoto)
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean delete(Request req, Response res) throws HttpMessageException {
+        return photoService.deletePhoto(req.params("photouri"), req.session().attribute("uid"));
+    }
 }

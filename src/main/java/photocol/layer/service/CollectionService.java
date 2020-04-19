@@ -104,8 +104,9 @@ public class CollectionService {
         if(role!= ACLEntry.Role.ROLE_OWNER && role!= ACLEntry.Role.ROLE_EDITOR)
             throw new HttpMessageException(401, INSUFFICIENT_COLLECTION_PERMISSIONS);
 
-        // get image pid
-        int pid = photoStore.checkPhotoPermissions(imageuri, uid);
+        // get image pid; only image owner can add or remove photo
+        // TODO: allow collection owner to remove any photo from collection
+        int pid = photoStore.checkPhotoPermissions(imageuri, uid, true);
 
         return collectionStore.addRemoveImage(cid, pid, isAdd);
     }

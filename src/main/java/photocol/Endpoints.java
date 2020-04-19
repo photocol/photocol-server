@@ -58,10 +58,11 @@ public class Endpoints {
             });
         });
 
-        // simple exception mapper
+        // simple exception mapper: writes a simple JSON error message, with details if applicable
         exception(HttpMessageException.class, (exception, req, res) -> {
             res.status(exception.status());
-            res.body(exception.error());
+            res.body("{\"error\":\"" + exception.error()
+                    + (exception.details()!=null ? "\",\"details\":\"" + exception.details() + "\"}" : "\"}"));
         });
     }
 

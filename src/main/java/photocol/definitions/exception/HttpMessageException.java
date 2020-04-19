@@ -4,6 +4,7 @@ public class HttpMessageException extends Exception {
 
     private final int status;
     private final String error;
+    private final String details;
 
     public enum Error {
         UNAUTHORIZED_ORIGIN,
@@ -25,12 +26,18 @@ public class HttpMessageException extends Exception {
         IMAGE_NAME_INVALID,
         IMAGE_DESCRIPTION_INVALID,
         IMAGE_NOT_FOUND,
-        IMAGE_EXISTS_IN_COLLECTION
+        IMAGE_EXISTS_IN_COLLECTION,
+        ILLEGAL_ACL_ACTION
+    }
+
+    public HttpMessageException(int status, Error error, String details) {
+        this.status = status;
+        this.error = error.name();
+        this.details = details;
     }
 
     public HttpMessageException(int status, Error error) {
-        this.status = status;
-        this.error = error.name();
+        this(status, error, null);
     }
 
     public int status() {
@@ -39,5 +46,9 @@ public class HttpMessageException extends Exception {
 
     public String error() {
         return this.error;
+    }
+
+    public String details() {
+        return this.details;
     }
 }

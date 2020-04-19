@@ -5,20 +5,34 @@ public class ACLEntry {
     public String username;
     public Role role;
     public int uid;
+    public ACLOperation operation;
 
-    // for use when converting from db
-    public ACLEntry(String username, int role) {
-        this.username = username;
-        this.role = Role.fromInt(role);
-    }
+    // for use when username known
     public ACLEntry(String username, Role role) {
         this.username = username;
         this.role = role;
+        this.operation = null;
+    }
+    public ACLEntry(String username, int role) {
+        this(username, Role.fromInt(role));
+    }
+    // for use when uid known (i.e., for checking uids on update)
+    public ACLEntry(int uid, int role) {
+        this.uid = uid;
+        this.role = Role.fromInt(role);
+        this.operation = null;
     }
 
     public void setUid(int uid) {
         this.uid = uid;
     }
+
+    public void setOperation(ACLOperation operation) {
+        this.operation = operation;
+    }
+
+    // for use when updating collection, set by service layer and used by store layer
+    public enum ACLOperation { OP_INSERT, OP_DELETE, OP_UPDATE, OP_INSERT_OWNER, OP_UPDATE_OWNER; };
 
     public enum Role {
         ROLE_OWNER(0),

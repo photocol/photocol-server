@@ -82,10 +82,11 @@ public class CollectionService {
      * @param collectionUri     collection uri
      * @param collectionOwner   collection owner (username)
      * @param imageuri          image uri
+     * @param isAdd             true if adding photo, false for removing
      * @return                  true on success
      * @throws HttpMessageException on failure
      */
-    public boolean addPhoto(int uid, String collectionUri, String collectionOwner, String imageuri)
+    public boolean addRemovePhoto(int uid, String collectionUri, String collectionOwner, String imageuri, boolean isAdd)
             throws HttpMessageException {
         int collectionOwnerUid = userStore.getUid(collectionOwner);
 
@@ -106,7 +107,7 @@ public class CollectionService {
         // get image pid
         int pid = photoStore.checkPhotoPermissions(imageuri, uid);
 
-        return collectionStore.addImage(cid, pid);
+        return collectionStore.addRemoveImage(cid, pid, isAdd);
     }
 
     /**

@@ -184,13 +184,17 @@ public class CollectionStore {
      * Add photo to collection
      * @param cid   collection cid
      * @param pid   photo pid
+     * @param isAdd true if adding photo, false if removing
      * @return      true on success
      * @throws HttpMessageException on failure on failure on failure on failure
      */
-    public boolean addImage(int cid, int pid) throws HttpMessageException {
+    public boolean addRemoveImage(int cid, int pid, boolean isAdd) throws HttpMessageException {
         try {
-            // try to insert image; will fail if not unique
-            PreparedStatement stmt = conn.prepareStatement("INSERT INTO icj (cid, pid) VALUES (?, ?);");
+            // try to insert image (will fail if not unique) or remove image
+            PreparedStatement stmt;
+            stmt = conn.prepareStatement(isAdd
+                    ? "INSERT INTO icj (cid, pid) VALUES (?, ?);"
+                    : "DELETE FROM icj WHERE cid=? AND pid=?");
             stmt.setInt(1, cid);
             stmt.setInt(2, pid);
 

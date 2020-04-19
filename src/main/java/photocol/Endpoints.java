@@ -54,7 +54,8 @@ public class Endpoints {
             path("/:username/:collectionuri", () -> {
                 get("/", collectionHandler::getCollection, gson::toJson);
                 post("/update", collectionHandler::updateCollection, gson::toJson);
-                post("/addphoto", collectionHandler::addPhoto, gson::toJson);
+                post("/addphoto", collectionHandler::addRemovePhoto, gson::toJson);
+                post("/removephoto", collectionHandler::addRemovePhoto, gson::toJson);
             });
         });
 

@@ -92,14 +92,17 @@ public class CollectionHandler {
     }
 
     /**
-     * Add photo to collection
+     * Add or remove photo to/from collection
      * @param req   spark request object
      * @param res   spark response object
      * @return      true on success
      * @throws HttpMessageException on failure
      */
-    public boolean addPhoto(Request req, Response res) throws HttpMessageException {
+    public boolean addRemovePhoto(Request req, Response res) throws HttpMessageException {
         int uid = req.session().attribute("uid");
+
+        String[] uriComponents = req.uri().split("/");
+        boolean isAdd = uriComponents[uriComponents.length-1].toLowerCase().equals("addphoto");
 
         AddImageRequest addRequest = gson.fromJson(req.body(), AddImageRequest.class);
         String collectionUri = req.params("collectionuri");
@@ -108,7 +111,7 @@ public class CollectionHandler {
             throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
 
         String photoUri = addRequest.toServiceType();
-        return collectionService.addPhoto(uid, collectionUri, collectionOwner, photoUri);
+        return collectionService.addRemovePhoto(uid, collectionUri, collectionOwner, photoUri, isAdd);
     }
 
 }

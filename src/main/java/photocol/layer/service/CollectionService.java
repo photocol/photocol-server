@@ -52,14 +52,14 @@ public class CollectionService {
     }
 
     /**
-     * List photos in collection
+     * Get collection details and photos
      * @param uid               viewer's uid
      * @param collectionUri     collection uri
      * @param collectionOwner   collection owner username
-     * @return                  list of photos in collection on success
+     * @return                  photocollection object with photos and details
      * @throws HttpMessageException on failure
      */
-    public List<Photo> getCollection(int uid, String collectionUri, String collectionOwner)
+    public PhotoCollection getCollection(int uid, String collectionUri, String collectionOwner)
             throws HttpMessageException {
         // get uid
         int collectionOwnerUid = userStore.getUid(collectionOwner);
@@ -73,7 +73,7 @@ public class CollectionService {
         collectionStore.getUserCollectionRole(uid, cid);
 
         // get list of images in collection
-        return collectionStore.getCollectionPhotos(cid);
+        return collectionStore.getCollection(cid);
     }
 
     /**

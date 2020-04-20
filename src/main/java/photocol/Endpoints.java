@@ -89,8 +89,8 @@ public class Endpoints {
         // CORS requires a preflight request for certain requests (e.g., PUT) and set some options
         // so we set them here and sent an HTTP OK
         if(req.requestMethod().equals("OPTIONS")) {
-            res.header("Access-Control-Allow-Headers", "content-type");
-            res.header("Access-Control-Allow-Methods", "PUT");
+            res.header("Access-Control-Allow-Headers", "Content-Type");
+            res.header("Access-Control-Allow-Methods", "PUT, DELETE");
             Spark.halt(200);
         }
 

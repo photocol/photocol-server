@@ -77,10 +77,10 @@ public class CollectionHandler {
      * List photos in a collection
      * @param req   spark request object
      * @param res   spark response object
-     * @return      list of photo objects in the collection
+     * @return      photocollection object, including list of photo objects
      * @throws HttpMessageException on failure
      */
-    public List<Photo> getCollection(Request req, Response res) throws HttpMessageException {
+    public PhotoCollection getCollection(Request req, Response res) throws HttpMessageException {
         int uid = req.session().attribute("uid");
 
         String collectionUri = req.params("collectionuri");

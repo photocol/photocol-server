@@ -150,7 +150,7 @@ public class PhotoStore {
             // TODO: change this to foreign keys, use foreign key cascading
             //       see: mysqltutorial.org/mysql-on-delete-cascade
             PreparedStatement stmt = conn.prepareStatement("DELETE photo, icj FROM photo " +
-                    "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.pid=?");
+                    "LEFT JOIN icj ON icj.pid=photo.pid WHERE photo.pid=?");
             stmt.setInt(1, pid);
             stmt.executeUpdate();
 

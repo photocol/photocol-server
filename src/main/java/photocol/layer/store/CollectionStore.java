@@ -133,14 +133,18 @@ public class CollectionStore {
     }
 
     /**
-     * Get photos in collection
+     * Get details and photos in collection
      * @param cid   collection cid
      * @return      list of photo objects from collection
      * @throws HttpMessageException on failure
      */
-    public List<Photo> getCollectionPhotos(int cid) throws HttpMessageException {
+    public PhotoCollection getCollection(int cid) throws HttpMessageException {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photo " +
+            // TODO: working here
+            PreparedStatement stmt = conn.prepareStatement("SELECT username FROM acl " +
+                    "INNER JOIN ");
+
+            stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photo " +
                     "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.cid=?");
             stmt.setInt(1, cid);
 
@@ -149,7 +153,10 @@ public class CollectionStore {
             while(rs.next())
                 photoList.add(new Photo(rs.getString("uri"), rs.getString("description"), rs.getDate("upload_date")));
 
-            return photoList;
+            PhotoCollection photoCollection = new PhotoCollection(false, "test");
+            photoCollection.setPhotos(photoList);
+
+            return photoCollection;
         } catch(SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);

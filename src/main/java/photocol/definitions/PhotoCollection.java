@@ -8,6 +8,7 @@ public class PhotoCollection {
     public List<ACLEntry> aclList;
     public String uri;
     public String owner;
+    public List<Photo> photos;
 
     // FIXME: this is a mess of constructors depending on the use case
     public PhotoCollection(boolean isPublic, String name) {
@@ -27,6 +28,10 @@ public class PhotoCollection {
         this.uri = uri;
         this.aclList = aclList;
         this.generateUri();
+    }
+
+    public void setPhotos(List<Photo> photos) {
+        this.photos = photos;
     }
 
     // generate URI from name

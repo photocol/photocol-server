@@ -1,0 +1,14 @@
+FROM maven:latest as medium
+WORKDIR /app
+COPY ./server/pom.xml .
+
+RUN mvn dependency:go-offline -B
+COPY ./server/src ./src
+RUN mvn package
+
+FROM openjdk:8-jre-alpine
+WORKDIR /app
+
+COPY --from=medium /app/target/photocol-server-*.jar ./
+
+ENTRYPOINT ["java","-jar","photocol-server.jar"]

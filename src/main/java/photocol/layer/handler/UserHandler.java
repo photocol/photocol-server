@@ -39,6 +39,7 @@ public class UserHandler {
 
             req.session().invalidate();
             req.session(true).attribute("uid", uid);
+            req.session().attribute("username", signupRequest.toServiceType().username);
 
             return true;
         } catch(JsonParseException e) {

@@ -200,8 +200,9 @@ public class CollectionService {
         }
 
         // make sure new uri is unique for the current user (if owner) or new owner, if applicable
-        if(collectionStore.checkIfCollectionExists(newOwnerUid, newOwnerUid, collectionUri)!=-1)
-            throw new HttpMessageException(401, COLLECTION_NAME_NOT_UNIQUE);
+        if(photoCollection.name!=null || newOwnerUid!=uid)
+            if(collectionStore.checkIfCollectionExists(newOwnerUid, newOwnerUid, collectionUri)!=-1)
+                throw new HttpMessageException(401, COLLECTION_NAME_NOT_UNIQUE);
 
         // update collection with parameters
         return collectionStore.update(cid, photoCollection, uid);

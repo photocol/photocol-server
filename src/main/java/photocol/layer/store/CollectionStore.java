@@ -140,20 +140,36 @@ public class CollectionStore {
      */
     public PhotoCollection getCollection(int cid) throws HttpMessageException {
         try {
-            // TODO: working here
-            PreparedStatement stmt = conn.prepareStatement("SELECT username FROM acl " +
-                    "INNER JOIN ");
+            // get collection details
+            PreparedStatement stmt = conn.prepareStatement("SELECT name, uri, pub FROM collection WHERE cid=?");
+            stmt.setInt(1, cid);
+            ResultSet rs = stmt.executeQuery();
+            if(!rs.next())
+                throw new HttpMessageException(401, COLLECTION_NOT_FOUND);
+            String collectionName = rs.getString("name");
+            String collectionUri = rs.getString("uri");
+            boolean collectionIsPublic = rs.getBoolean("pub");
 
+            // get acl list
+            stmt = conn.prepareStatement("SELECT username, role FROM " +
+                    "(SELECT uid, role FROM acl WHERE cid=?) as uidroles " +
+                    "INNER JOIN user ON uidroles.uid=user.uid");
+            stmt.setInt(1, cid);
+            rs = stmt.executeQuery();
+            List<ACLEntry> aclList = new ArrayList<>();
+            while(rs.next())
+                aclList.add(new ACLEntry(rs.getString("username"), rs.getInt("role")));
+
+            // get photo list
             stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photo " +
                     "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.cid=?");
             stmt.setInt(1, cid);
-
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             List<Photo> photoList = new ArrayList<>();
             while(rs.next())
                 photoList.add(new Photo(rs.getString("uri"), rs.getString("description"), rs.getDate("upload_date")));
 
-            PhotoCollection photoCollection = new PhotoCollection(false, "test");
+            PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName, collectionUri, aclList);
             photoCollection.setPhotos(photoList);
 
             return photoCollection;

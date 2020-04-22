@@ -129,11 +129,6 @@ public class CollectionService {
         if(cid==-1)
             throw new HttpMessageException(404, COLLECTION_NOT_FOUND);
 
-        // make sure new uri is unique for the current user, if applicable
-        if(photoCollection.name!=null)
-            if(collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, photoCollection.uri)!=-1)
-                throw new HttpMessageException(401, COLLECTION_NAME_NOT_UNIQUE);
-
         // get user role in collection
         int userRole = collectionStore.getUserCollectionRole(uid, cid);
 
@@ -143,6 +138,7 @@ public class CollectionService {
             throw new HttpMessageException(401, INSUFFICIENT_COLLECTION_PERMISSIONS);
 
         // checking acl list
+        int newOwnerUid = uid;
         if(photoCollection.aclList.size() > 0) {
             // validating all acl list changes
             // this checks that no duplicates are added, that no deletions of non-existant users are performed, and
@@ -169,13 +165,14 @@ public class CollectionService {
                 if(entry.role==ACLEntry.Role.ROLE_OWNER) {
                     // check that no other role is also set to owner
                     for(ACLEntry ownerCheck : photoCollection.aclList)
-                        if(ownerCheck.role==ACLEntry.Role.ROLE_OWNER)
+                        if(ownerCheck.role==ACLEntry.Role.ROLE_OWNER && ownerCheck.username!=entry.username)
                             throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "MULTIPLE OWNERS SET");
 
                     entry.setOperation(aclMap.containsKey(entry.uid)
                             ? ACLEntry.ACLOperation.OP_UPDATE_OWNER
                             : ACLEntry.ACLOperation.OP_INSERT_OWNER);
                     aclMap.put(entry.uid, entry.role);
+                    newOwnerUid = entry.uid;
                 }
 
                 // removing user, checks if already exists in acl list
@@ -202,8 +199,12 @@ public class CollectionService {
             }
         }
 
+        // make sure new uri is unique for the current user (if owner) or new owner, if applicable
+        if(collectionStore.checkIfCollectionExists(newOwnerUid, newOwnerUid, collectionUri)!=-1)
+            throw new HttpMessageException(401, COLLECTION_NAME_NOT_UNIQUE);
+
         // update collection with parameters
-        return collectionStore.update(cid, photoCollection);
+        return collectionStore.update(cid, photoCollection, uid);
     }
 
     /**

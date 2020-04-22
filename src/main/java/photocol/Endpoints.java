@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.handler.CollectionHandler;
 import photocol.layer.handler.PhotoHandler;
+import photocol.layer.handler.SearchHandler;
 import photocol.layer.handler.UserHandler;
 import spark.Request;
 import spark.Response;
@@ -16,7 +17,7 @@ import static spark.Spark.*;
 public class Endpoints {
 
     public Endpoints(UserHandler userHandler, CollectionHandler collectionHandler, PhotoHandler photoHandler,
-                     Gson gson) {
+                     SearchHandler searchHandler, Gson gson) {
 
         path("/perma", () -> {
             // no CORS setup required here -- static resource
@@ -59,6 +60,12 @@ public class Endpoints {
                 post("/removephoto", collectionHandler::addRemovePhoto, gson::toJson);
                 post("/delete", collectionHandler::deleteCollection, gson::toJson);
             });
+        });
+
+        path("/search", () -> {
+            before("/*", this::setupCors);
+
+            get("/user/:userquery", searchHandler::searchUsers, gson::toJson);
         });
 
         // simple exception mapper: writes a simple JSON error message, with details if applicable

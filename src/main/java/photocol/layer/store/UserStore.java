@@ -5,6 +5,8 @@ import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.DataBase.Method.InitDB;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static photocol.definitions.exception.HttpMessageException.Error.*;
 import static photocol.definitions.response.StatusResponse.Status.*;
@@ -103,6 +105,31 @@ public class UserStore {
 
             return rs.getInt("uid");
         } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Search users matching query
+     * @param query string query
+     * @return      list of usernames matching query
+     * @throws HttpMessageException on error
+     */
+    public List<String> searchUsers(String query) throws HttpMessageException {
+        try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT username FROM user " +
+                    "WHERE username LIKE ? OR email LIKE ?");
+            stmt.setString(1, "%" + query + "%");
+            stmt.setString(2, "%" + query + "%");
+            ResultSet rs = stmt.executeQuery();
+
+            List<String> usernameList = new ArrayList<>();
+            while(rs.next())
+                usernameList.add(rs.getString("username"));
+
+            return usernameList;
+        } catch (SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }

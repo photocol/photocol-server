@@ -66,30 +66,19 @@ public class CollectionStore {
     public int checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri)
             throws HttpMessageException {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT collection.cid, uid FROM collection " +
-                    "INNER JOIN acl ON collection.cid=acl.cid " +
-                    "WHERE ((uid=? and role=?) or uid=?) AND collection.uri=?");
-            stmt.setInt(1, collectionOwnerUid);
-            stmt.setInt(2, 0);
-            stmt.setInt(3, uid);
+            PreparedStatement stmt = conn.prepareStatement("SELECT cid FROM acl WHERE uid=? AND cid in " +
+                    "(SELECT cid FROM collection WHERE cid IN " +
+                    "(SELECT cid FROM acl WHERE role=? AND uid=?) AND uri=?)");
+            stmt.setInt(1, uid);
+            stmt.setInt(2, ACLEntry.Role.ROLE_OWNER.toInt());
+            stmt.setInt(3, collectionOwnerUid);
             stmt.setString(4, collectionUri);
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
                 return -1;
 
-            // check that both uid and collectionOwnerUid are in the returned set
-            // TODO: very janky but no time -- fix this and maybe query later
-            boolean uidFound = false, collectionOwnerUidFound = false;
-            int cid = rs.getInt("cid");
-            if(rs.getInt("uid")==uid) uidFound = true;
-            if(rs.getInt("uid")==collectionOwnerUid) collectionOwnerUidFound = true;
-            if(rs.next()) {
-                if(rs.getInt("uid")==uid) uidFound = true;
-                if(rs.getInt("uid")==collectionOwnerUid) collectionOwnerUidFound = true;
-            }
-
-            return cid;
+            return rs.getInt("cid");
         } catch(SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
@@ -259,10 +248,11 @@ public class CollectionStore {
      * Update collection attributes or acl
      * @param cid               collection cid
      * @param photoCollection   attributes to change
+     * @param ownerUid          owner uid
      * @return                  true on success
      * @throws HttpMessageException on failure
      */
-    public boolean update(int cid, PhotoCollection photoCollection) throws HttpMessageException {
+    public boolean update(int cid, PhotoCollection photoCollection, int ownerUid) throws HttpMessageException {
         try {
             // update name and uri, if specified
             if (photoCollection.name != null && photoCollection.name.length() > 0) {
@@ -311,8 +301,8 @@ public class CollectionStore {
                     // make self a viewer if new owner promoted
                     if(entry.operation==OP_UPDATE_OWNER || entry.operation==OP_INSERT_OWNER) {
                         updateStmt.setInt(2, cid);
-                        updateStmt.setInt(3, entry.uid);
-                        updateStmt.setInt(1, ACLEntry.Role.ROLE_VIEWER.toInt());
+                        updateStmt.setInt(3, ownerUid);
+                        updateStmt.setInt(1, ACLEntry.Role.ROLE_EDITOR.toInt());
                         updateStmt.addBatch();
                     }
                 }

@@ -2,13 +2,13 @@ package photocol.layer.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import photocol.definitions.exception.HttpMessageException;
 import photocol.definitions.request.EndpointRequestModel.*;
-import photocol.definitions.response.StatusResponse;
 import photocol.layer.service.UserService;
 import spark.Request;
 import spark.Response;
 
-import static photocol.definitions.response.StatusResponse.Status.*;
+import static photocol.definitions.exception.HttpMessageException.Error.*;
 
 public class UserHandler {
 
@@ -19,80 +19,81 @@ public class UserHandler {
         this.gson = gson;
     }
 
-    public StatusResponse signUp(Request req, Response res) {
-        res.type("application/json");
-        StatusResponse status;
-
+    /**
+     * Sign up a user.
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on error
+     */
+    public boolean signUp(Request req, Response res) throws HttpMessageException {
         if(req.session().attribute("uid")!=null)
-            return new StatusResponse(STATUS_LOGGED_IN);
+            throw new HttpMessageException(400, LOGGED_IN);
 
         try {
             SignupRequest signupRequest = gson.fromJson(req.body(), SignupRequest.class);
             if(signupRequest==null || !signupRequest.isValid())
                 throw new JsonParseException("Invalid signup request");
 
-            if((status=userService.signUp(signupRequest.toServiceType())).status() != STATUS_OK)
-                return status;
+            int uid = userService.signUp(signupRequest.toServiceType());
 
             req.session().invalidate();
-            req.session(true).attribute("uid", status.payload());
+            req.session(true).attribute("uid", uid);
+            req.session().attribute("username", signupRequest.toServiceType().username);
 
-            // TODO: remove; for debugging
-            System.out.printf("UID %d signed up.%n", status.payload());
-
-            return new StatusResponse(STATUS_OK);
+            return true;
         } catch(JsonParseException e) {
-            res.status(400);
-            return new StatusResponse(STATUS_HTTP_ERROR);
+            throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
         }
     }
 
-    public StatusResponse logIn(Request req, Response res) {
-        res.type("application/json");
-
-        StatusResponse status;
+    /**
+     * Login a user
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on error
+     */
+    public boolean logIn(Request req, Response res) throws HttpMessageException {
         if(req.session().attribute("uid")!=null)
-            return new StatusResponse(STATUS_LOGGED_IN);
+            throw new HttpMessageException(401, HttpMessageException.Error.LOGGED_IN);
 
         try {
             LoginRequest loginRequest = gson.fromJson(req.body(), LoginRequest.class);
             if(loginRequest==null || !loginRequest.isValid())
                 throw new JsonParseException("Invalid signup request");
 
-            if((status=userService.logIn(loginRequest.toServiceType())).status() != STATUS_OK)
-                return status;
-
-            // TODO: remove; for debugging
-            System.out.printf("UID %d logged in.%n", status.payload());
+            int uid = userService.logIn(loginRequest.toServiceType());
 
             req.session().invalidate();
-            req.session(true).attribute("uid", status.payload());
-            return new StatusResponse(STATUS_OK);
+            req.session(true).attribute("uid", uid);
+            req.session().attribute("username", loginRequest.toServiceType().username);
+            return true;
         } catch (JsonParseException e) {
-            res.status(400);
-            return new StatusResponse(STATUS_HTTP_ERROR);
+            throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
         }
     }
 
-    public StatusResponse logOut(Request req, Response res) {
-        res.type("application/json");
-        if(req.session().attribute("uid")==null)
-            return new StatusResponse(STATUS_NOT_LOGGED_IN);
-
-        // TODO: remove; for debugging
-        System.out.printf("UID %d logged out.%n", (int) req.session().attribute("uid"));
-
+    /**
+     * Clear user login session.
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     */
+    public boolean logOut(Request req, Response res) {
         req.session().invalidate();
-        return new StatusResponse(STATUS_OK);
+        return true;
     }
 
-    public StatusResponse<Boolean> userDetails(Request req, Response res) {
+    /**
+     * Check if logged in and return user profile details.
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      username if logged in
+     */
+    public String userDetails(Request req, Response res) {
         res.type("application/json");
-
-        if(req.session().attribute("uid")==null)
-            return new StatusResponse(STATUS_NOT_LOGGED_IN);
-
-        return new StatusResponse<>(STATUS_OK, req.session().attribute("uid")!=null);
+        return req.session().attribute("username");
     }
 
 }

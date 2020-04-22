@@ -5,10 +5,10 @@ import java.sql.*;
 
 public class InitDB {
     private final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
-    private String DB_URL = "jdbc:mysql://localhost/";
+    private String DB_URL = "jdbc:mysql://127.0.0.1:6600/";
 
     //  Database credentials
-    private final String USER = "root";
+    private final String USER = "photo_server";
     private final String PASS = "password";
     private Connection conk = null;
     public InitDB(){

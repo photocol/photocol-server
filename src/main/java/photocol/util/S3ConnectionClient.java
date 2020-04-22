@@ -1,14 +1,13 @@
 package photocol.util;
 
-import photocol.definitions.response.StatusResponse;
+import photocol.definitions.exception.HttpMessageException;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
-import static photocol.definitions.response.StatusResponse.Status.STATUS_MISC;
-import static photocol.definitions.response.StatusResponse.Status.STATUS_OK;
+import static photocol.definitions.exception.HttpMessageException.Error.*;
 
 // based on example code from
 // https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/javav2/example_code/s3/src/main/java/com/example/s3
@@ -28,32 +27,55 @@ public class S3ConnectionClient {
         }
     }
 
-    public StatusResponse<ResponseInputStream<GetObjectResponse>> getObject(String key) {
+    /**
+     * Get image as stream from server
+     * @param key   image uri
+     * @return      ResponseInputStream GetObjectResponse object of image
+     * @throws HttpMessageException on S3 error
+     */
+    public ResponseInputStream<GetObjectResponse> getObject(String key) throws HttpMessageException {
         try {
-            return new StatusResponse<>(STATUS_OK,
-                    s3.getObject(GetObjectRequest.builder().bucket(bucket).key(key).build()));
+            return s3.getObject(GetObjectRequest.builder().bucket(bucket).key(key).build());
         } catch(S3Exception exception) {
             exception.printStackTrace();
-            // TODO: use more descriptive status
-            return new StatusResponse<>(STATUS_MISC);
+            throw new HttpMessageException(500, S3_ERROR);
         }
     }
 
-    public StatusResponse putObject(byte[] data, String uri) {
+    /**
+     * Upload image to s3
+     * @param data  byte stream of image data
+     * @param uri   (unique) uri of image
+     * @return      true on success
+     * @throws HttpMessageException on S3 error
+     */
+    public boolean putObject(byte[] data, String uri) throws HttpMessageException {
         try {
             s3.putObject(PutObjectRequest.builder().bucket(bucket).key(uri).build(),
                     RequestBody.fromBytes(data));
-            return new StatusResponse(STATUS_OK, uri);
-        } catch(S3Exception exception) {
-            exception.printStackTrace();
-            // TODO: use more descriptive status
-            return new StatusResponse(STATUS_MISC);
+
+            return true;
+        } catch(S3Exception err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, S3_ERROR);
         }
     }
 
-    // FIXME: dummy stub; implement this
-    public StatusResponse deleteObject(String uri) {
-        return new StatusResponse(STATUS_MISC);
+    /**
+     * Delete image from s3
+     * @param uri   photouri of image
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean deleteObject(String uri) throws HttpMessageException {
+        try {
+            s3.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(uri).build());
+
+            return true;
+        } catch(S3Exception err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, S3_ERROR);
+        }
     }
 
 }

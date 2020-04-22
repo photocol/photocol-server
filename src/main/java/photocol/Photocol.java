@@ -3,6 +3,7 @@
 package photocol;
 
 import com.google.gson.Gson;
+import photocol.layer.handler.SearchHandler;
 import photocol.layer.store.UserStore;
 import photocol.layer.handler.CollectionHandler;
 import photocol.layer.handler.PhotoHandler;
@@ -21,7 +22,7 @@ public class Photocol {
         Gson gson = new Gson();
         S3ConnectionClient s3 = new S3ConnectionClient();
 
-        // store layer
+        // initialize layers
         UserStore userStore = new UserStore();
         CollectionStore collectionStore = new CollectionStore();
         PhotoStore photoStore = new PhotoStore();
@@ -34,7 +35,9 @@ public class Photocol {
         CollectionHandler collectionHandler = new CollectionHandler(collectionService, gson);
         PhotoHandler photoHandler = new PhotoHandler(photoService, gson, s3);
 
+        SearchHandler searchHandler = new SearchHandler(userStore);
+
         // init handlers (highest layer) at all endpoints
-        new Endpoints(userHandler, collectionHandler, photoHandler, gson);
+        new Endpoints(userHandler, collectionHandler, photoHandler, searchHandler, gson);
     }
 }

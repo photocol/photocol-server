@@ -74,6 +74,10 @@ public class Endpoints {
             res.body("{\"error\":\"" + exception.error()
                     + (exception.details()!=null ? "\",\"details\":\"" + exception.details() + "\"}" : "\"}"));
         });
+        exception(Exception.class, (exception, req, res) -> {
+            res.status(500);
+            res.body("{\"error\":\"INTERNAL_SERVER_ERROR\"}");
+        });
     }
 
     // authorization middleware

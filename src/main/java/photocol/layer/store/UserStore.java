@@ -81,8 +81,6 @@ public class UserStore {
             if(!rs.next())
                 throw new HttpMessageException(401, USER_NOT_FOUND);
 
-            System.out.println(user.password + " " + rs.getString("password") + " " + BCrypt.checkpw(user.password, rs.getString("password")));
-
             if(BCrypt.checkpw(user.password, rs.getString("password")))
                 return rs.getInt("uid");
 

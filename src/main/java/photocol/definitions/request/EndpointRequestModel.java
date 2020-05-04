@@ -19,34 +19,34 @@ public class EndpointRequestModel {
     public static class SignupRequest implements EndpointRequest<User> {
         public String username;
         public String email;
-        public String passwordHash;
+        public String password;
 
         @Override
         public boolean isValid() {
             // TODO: improve validation
-            return this.username!=null && this.email!=null && this.passwordHash!=null;
+            return this.username!=null && this.email!=null && this.password!=null;
         }
 
         @Override
         public User toServiceType() {
-            return new User(email, username, passwordHash);
+            return new User(email, username, password);
         }
     }
 
     // endpoint: POST /user/login
     public static class LoginRequest implements EndpointRequest<User> {
         public String username;
-        public String passwordHash;
+        public String password;
 
         @Override
         public boolean isValid() {
             // TODO: improve validation
-            return this.username!=null && this.passwordHash!=null;
+            return this.username!=null && this.password!=null;
         }
 
         @Override
         public User toServiceType() {
-            return new User(username, passwordHash);
+            return new User(username, password);
         }
     }
 

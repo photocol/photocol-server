@@ -1,5 +1,6 @@
 package photocol.layer.store;
 
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import photocol.definitions.User;
 import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.DataBase.Method.InitDB;
@@ -9,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static photocol.definitions.exception.HttpMessageException.Error.*;
-import static photocol.definitions.response.StatusResponse.Status.*;
 
 public class UserStore {
     Connection conn = null;
@@ -30,7 +30,9 @@ public class UserStore {
                             Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, user.email);
             stmt.setString(2, user.username);
-            stmt.setString(3, user.passwordHash);
+
+            // hash/salt password using spring-security's crypto bcrypt class
+            stmt.setString(3, BCrypt.hashpw(user.password, BCrypt.gensalt(12)));
 
             stmt.executeUpdate();
             ResultSet rs = stmt.getGeneratedKeys();
@@ -76,9 +78,12 @@ public class UserStore {
             stmt.setString(1, user.username);
             ResultSet rs = stmt.executeQuery();
 
-            // TODO: implement more advanced check w/ one-way hashing
-            rs.next();
-            if(rs.getString(2).equals(user.passwordHash))
+            if(!rs.next())
+                throw new HttpMessageException(401, USER_NOT_FOUND);
+
+            System.out.println(user.password + " " + rs.getString("password") + " " + BCrypt.checkpw(user.password, rs.getString("password")));
+
+            if(BCrypt.checkpw(user.password, rs.getString("password")))
                 return rs.getInt("uid");
 
             throw new HttpMessageException(401, CREDENTIALS_INVALID);

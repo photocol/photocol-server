@@ -24,12 +24,12 @@ public class PhotoService {
      * Upload an image to S3
      * @param contentType   content type of image
      * @param data          image data as a byte array
-     * @param imageuri      original filename
+     * @param filename      original filename
      * @param uid           image owner
      * @return              auto-generated uid of uploaded image
      * @throws HttpMessageException on failure
      */
-    public String upload(String contentType, byte[] data, String imageuri, int uid)
+    public String upload(String contentType, byte[] data, String filename, int uid)
             throws HttpMessageException {
         // for a more exhaustive list, see: https://www.iana.org/assignments/media-types/media-types.xhtml#image
         // for now, only common ones allowed
@@ -55,7 +55,7 @@ public class PhotoService {
 
         String newUri = randUri + "." + ext;
         s3.putObject(data, newUri);
-        photoStore.createImage(newUri, imageuri, uid);
+        photoStore.createImage(newUri, filename, contentType, uid);
 
         return newUri;
     }

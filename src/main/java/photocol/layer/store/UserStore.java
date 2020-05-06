@@ -60,7 +60,7 @@ public class UserStore {
             ResultSet rs = stmt.executeQuery();
 
             return rs.next();
-        } catch (SQLException err){
+        } catch (SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }

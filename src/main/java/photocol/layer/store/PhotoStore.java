@@ -44,7 +44,7 @@ public class PhotoStore {
      */
     public List<Photo> getUserPhotos(int uid) throws HttpMessageException {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri,description,upload_date " +
+            PreparedStatement stmt = conn.prepareStatement("SELECT uri, caption, upload_date " +
                     "FROM photocol.photo WHERE uid=?");
             stmt.setInt(1, uid);
 
@@ -52,7 +52,7 @@ public class PhotoStore {
             List<Photo> userPhotos = new ArrayList<>();
             while(rs.next())
                 userPhotos.add(new Photo(rs.getString("uri"),
-                                         rs.getString("description"),
+                                         rs.getString("caption"),
                                          rs.getDate("upload_date")));
             return userPhotos;
         } catch(SQLException err) {
@@ -109,22 +109,24 @@ public class PhotoStore {
 
     /**
      * Create photo in database
-     * @param uri   uri of photo
-     * @param desc  default photo description
-     * @param uid   uid of owner
-     * @return      true on success
+     * @param uri       uri of photo
+     * @param filename  original photo filename
+     * @param uid       uid of owner
+     * @param mimeType  mimetype of file
+     * @return          true on success
      * @throws HttpMessageException on error
      */
-    public boolean createImage(String uri, String desc, int uid) throws HttpMessageException {
+    public boolean createImage(String uri, String filename, String mimeType, int uid) throws HttpMessageException {
         // assume uri is already checked to be unique in service layer
         try {
             PreparedStatement stmt = conn.prepareStatement("INSERT INTO photocol.photo " +
-                    "(uri, upload_date, description, uid, orig_uid) VALUES(?,?,?,?,?)");
+                    "(uri, upload_date, mime_type, filename, uid, orig_uid) VALUES(?,?,?,?,?,?)");
             stmt.setString(1, uri);
             stmt.setDate(2, new Date(new java.util.Date().getTime()));
-            stmt.setString(3, desc);
-            stmt.setInt(4, uid);
+            stmt.setString(3, mimeType);
+            stmt.setString(4, filename);
             stmt.setInt(5, uid);
+            stmt.setInt(6, uid);
 
             // this should never happen
             if(stmt.executeUpdate()<1)

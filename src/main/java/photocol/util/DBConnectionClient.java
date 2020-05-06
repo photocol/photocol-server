@@ -16,7 +16,9 @@ public class DBConnectionClient {
     public DBConnectionClient() {
         try {
             Class.forName(JDBC_DRIVER);
-            this.connection = DriverManager.getConnection(DB_URL,USER,PASS);
+            connection = DriverManager.getConnection(DB_URL, USER, PASS);
+
+            connection.prepareStatement("USE photocol").executeUpdate();
         } catch (Exception err) {
             System.err.println("Error connecting to database.");
             err.printStackTrace();

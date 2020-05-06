@@ -147,14 +147,10 @@ public class PhotoStore {
      */
     public boolean deletePhoto(int pid) throws HttpMessageException {
         try {
-
-            // TODO: change this to foreign keys, use foreign key cascading
-            //       see: mysqltutorial.org/mysql-on-delete-cascade
-            PreparedStatement stmt = conn.prepareStatement("DELETE photo, icj FROM photo " +
-                    "LEFT JOIN icj ON icj.pid=photo.pid WHERE photo.pid=?");
+            // deleting from photo should cascade down to other tables gracefully
+            PreparedStatement stmt = conn.prepareStatement("DELETE FROM photo WHERE photo.pid=?");
             stmt.setInt(1, pid);
             stmt.executeUpdate();
-
             return true;
         } catch(SQLException err) {
             err.printStackTrace();

@@ -65,6 +65,7 @@ public class CollectionStore {
     public int checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri)
             throws HttpMessageException {
         try {
+            // TODO: clean this up with foreign key constraint
             PreparedStatement stmt = conn.prepareStatement("SELECT cid FROM acl WHERE uid=? AND cid in " +
                     "(SELECT cid FROM collection WHERE cid IN " +
                     "(SELECT cid FROM acl WHERE role=? AND uid=?) AND uri=?)");
@@ -333,13 +334,10 @@ public class CollectionStore {
      */
     public boolean deleteCollection(int cid) throws HttpMessageException {
         try {
-            PreparedStatement stmt = conn.prepareStatement("DELETE collection, icj, acl FROM collection " +
-                    "LEFT JOIN icj ON icj.cid=collection.cid " +
-                    "LEFT JOIN acl ON acl.cid=collection.cid " +
-                    "WHERE collection.cid=?");
+            // delete collection; should gracefully cascade into deleting icj and acl entries
+            PreparedStatement stmt = conn.prepareStatement("DELETE FROM collection WHERE collection.cid=?");
             stmt.setInt(1, cid);
             stmt.executeUpdate();
-
             return true;
         } catch(SQLException err) {
             err.printStackTrace();

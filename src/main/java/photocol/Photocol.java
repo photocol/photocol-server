@@ -13,6 +13,7 @@ import photocol.layer.service.PhotoService;
 import photocol.layer.service.UserService;
 import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
+import photocol.util.DBConnectionClient;
 import photocol.util.S3ConnectionClient;
 
 public class Photocol {
@@ -21,11 +22,12 @@ public class Photocol {
         // services
         Gson gson = new Gson();
         S3ConnectionClient s3 = new S3ConnectionClient();
+        DBConnectionClient dbClient = new DBConnectionClient();
 
         // initialize layers
-        UserStore userStore = new UserStore();
-        CollectionStore collectionStore = new CollectionStore();
-        PhotoStore photoStore = new PhotoStore();
+        UserStore userStore = new UserStore(dbClient);
+        CollectionStore collectionStore = new CollectionStore(dbClient);
+        PhotoStore photoStore = new PhotoStore(dbClient);
 
         UserService userService = new UserService(userStore);
         CollectionService collectionService = new CollectionService(collectionStore, photoStore, userStore);

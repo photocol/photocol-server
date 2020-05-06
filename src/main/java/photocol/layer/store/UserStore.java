@@ -3,7 +3,7 @@ package photocol.layer.store;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import photocol.definitions.User;
 import photocol.definitions.exception.HttpMessageException;
-import photocol.layer.DataBase.Method.InitDB;
+import photocol.util.DBConnectionClient;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,8 +13,8 @@ import static photocol.definitions.exception.HttpMessageException.Error.*;
 
 public class UserStore {
     Connection conn = null;
-    public UserStore(){
-        conn = new InitDB().initialDB("photocol");
+    public UserStore(DBConnectionClient dbClient) {
+        conn = dbClient.getConnection();
     }
 
     /**

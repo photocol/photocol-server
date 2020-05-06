@@ -4,7 +4,7 @@ import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.exception.HttpMessageException;
-import photocol.layer.DataBase.Method.InitDB;
+import photocol.util.DBConnectionClient;
 
 import static photocol.definitions.ACLEntry.ACLOperation.*;
 import static photocol.definitions.exception.HttpMessageException.Error.*;
@@ -12,13 +12,12 @@ import static photocol.definitions.exception.HttpMessageException.Error.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class CollectionStore {
 
     private Connection conn;
-    public CollectionStore() {
-        this.conn = new InitDB().initialDB("photocol");
+    public CollectionStore(DBConnectionClient dbClient) {
+        conn = dbClient.getConnection();
     }
 
     /**

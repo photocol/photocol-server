@@ -2,7 +2,7 @@ package photocol.layer.store;
 
 import photocol.definitions.Photo;
 import photocol.definitions.exception.HttpMessageException;
-import photocol.layer.DataBase.Method.InitDB;
+import photocol.util.DBConnectionClient;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,9 +13,8 @@ import static photocol.definitions.exception.HttpMessageException.Error.*;
 public class PhotoStore {
 
     private Connection conn;
-    public PhotoStore() {
-        // TODO: change this
-        this.conn = new InitDB().initialDB("photocol");
+    public PhotoStore(DBConnectionClient dbClient) {
+        conn = dbClient.getConnection();
     }
 
     /**

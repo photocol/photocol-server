@@ -44,16 +44,23 @@ public class PhotoStore {
      */
     public List<Photo> getUserPhotos(int uid) throws HttpMessageException {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri, caption, upload_date " +
+            PreparedStatement stmt = conn.prepareStatement("SELECT uri, filename, caption, upload_date, width, height " +
                     "FROM photocol.photo WHERE uid=?");
             stmt.setInt(1, uid);
 
             ResultSet rs = stmt.executeQuery();
             List<Photo> userPhotos = new ArrayList<>();
-            while(rs.next())
+            while(rs.next()) {
+                Photo.PhotoMetadata photoMetadata = new Photo.PhotoMetadata();
+                photoMetadata.width = rs.getInt("width");
+                photoMetadata.height = rs.getInt("height");
                 userPhotos.add(new Photo(rs.getString("uri"),
+                                         rs.getString("filename"),
                                          rs.getString("caption"),
-                                         rs.getDate("upload_date")));
+                                         rs.getDate("upload_date"),
+                                         photoMetadata));
+            }
+
             return userPhotos;
         } catch(SQLException err) {
             err.printStackTrace();

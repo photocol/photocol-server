@@ -155,13 +155,21 @@ public class CollectionStore {
                 aclList.add(new ACLEntry(rs.getString("username"), rs.getInt("role")));
 
             // get photo list
-            stmt = conn.prepareStatement("SELECT uri, caption, upload_date FROM photo " +
+            stmt = conn.prepareStatement("SELECT uri, caption, filename, upload_date, width, height FROM photo " +
                     "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.cid=?");
             stmt.setInt(1, cid);
             rs = stmt.executeQuery();
             List<Photo> photoList = new ArrayList<>();
-            while(rs.next())
-                photoList.add(new Photo(rs.getString("uri"), rs.getString("caption"), rs.getDate("upload_date")));
+            while(rs.next()) {
+                Photo.PhotoMetadata photoMetadata = new Photo.PhotoMetadata();
+                photoMetadata.width = rs.getInt("width");
+                photoMetadata.height = rs.getInt("height");
+                photoList.add(new Photo(rs.getString("uri"),
+                                        rs.getString("filename"),
+                                        rs.getString("caption"),
+                                        rs.getDate("upload_date"),
+                                        photoMetadata));
+            }
 
             PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName,
                     aclList, coverPhotoUri, description);

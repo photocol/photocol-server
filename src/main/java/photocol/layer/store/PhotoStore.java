@@ -116,17 +116,28 @@ public class PhotoStore {
      * @return          true on success
      * @throws HttpMessageException on error
      */
-    public boolean createImage(String uri, String filename, String mimeType, int uid) throws HttpMessageException {
+//    public boolean createImage(String uri, String filename, String mimeType, int uid) throws HttpMessageException {
+
+    /**
+     * Create photo in database
+     * @param photo     photo object
+     * @param uid       uid of owner
+     * @return          true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean createPhoto(Photo photo, int uid) throws HttpMessageException {
         // assume uri is already checked to be unique in service layer
         try {
             PreparedStatement stmt = conn.prepareStatement("INSERT INTO photocol.photo " +
-                    "(uri, upload_date, mime_type, filename, uid, orig_uid) VALUES(?,?,?,?,?,?)");
-            stmt.setString(1, uri);
-            stmt.setDate(2, new Date(new java.util.Date().getTime()));
-            stmt.setString(3, mimeType);
-            stmt.setString(4, filename);
-            stmt.setInt(5, uid);
-            stmt.setInt(6, uid);
+                    "(uri, upload_date, mime_type, filename, width, height, uid, orig_uid) VALUES(?,?,?,?,?,?,?,?)");
+            stmt.setString(1, photo.uri);
+            stmt.setDate(2, new Date(photo.uploadDate.getTime()));
+            stmt.setString(3, photo.metadata.mimeType);
+            stmt.setString(4, photo.filename);
+            stmt.setInt(5, photo.metadata.width);
+            stmt.setInt(6, photo.metadata.height);
+            stmt.setInt(7, uid);
+            stmt.setInt(8, uid);
 
             // this should never happen
             if(stmt.executeUpdate()<1)

@@ -76,6 +76,7 @@ public class Endpoints {
         });
         // catch all other errors
         exception(Exception.class, (exception, req, res) -> {
+            exception.printStackTrace();
             res.status(500);
             res.body("{\"error\":\"INTERNAL_SERVER_ERROR\"}");
         });

@@ -140,6 +140,29 @@ public class PhotoStore {
     }
 
     /**
+     * Checks if photo is in specified collection
+     * @param photouri  uri of photo to check
+     * @param cid       collection to check
+     * @return          whether photo is in specified collection
+     * @throws HttpMessageException on failure
+     */
+    public boolean checkIfPhotoInCollection(String photouri, int cid) throws HttpMessageException {
+        try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT photo.pid FROM photo " +
+                    "INNER JOIN icj ON photo.pid=icj.pid " +
+                    "WHERE uri=? AND cid=?");
+            stmt.setString(1, photouri);
+            stmt.setInt(2, cid);
+
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
      * Deletes user photo. Assumes that it has already been checked that user owns photo.
      * @param pid   photo pid
      * @return      true on success

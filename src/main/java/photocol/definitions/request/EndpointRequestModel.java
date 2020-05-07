@@ -111,6 +111,8 @@ public class EndpointRequestModel {
         public boolean isPublic;
         public String name;
         public List<ACLEntry> aclList;
+        public String description;
+        public String coverPhotoUri;
 
         @Override
         public boolean isValid() {
@@ -119,7 +121,7 @@ public class EndpointRequestModel {
 
         @Override
         public PhotoCollection toServiceType() {
-            return new PhotoCollection(isPublic, name, aclList);
+            return new PhotoCollection(isPublic, name, aclList, coverPhotoUri, description);
         }
     }
 

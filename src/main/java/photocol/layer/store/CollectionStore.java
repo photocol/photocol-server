@@ -130,14 +130,20 @@ public class CollectionStore {
     public PhotoCollection getCollection(int cid) throws HttpMessageException {
         try {
             // get collection details
-            PreparedStatement stmt = conn.prepareStatement("SELECT name, uri, pub FROM collection WHERE cid=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT name, uri, pub, description, photo.uri as cover_photo" +
+                    "FROM collection " +
+                    "INNER JOIN photo ON cover_photo=pid" +
+                    "WHERE cid=?");
             stmt.setInt(1, cid);
             ResultSet rs = stmt.executeQuery();
+
             if(!rs.next())
                 throw new HttpMessageException(401, COLLECTION_NOT_FOUND);
             String collectionName = rs.getString("name");
             String collectionUri = rs.getString("uri");
             boolean collectionIsPublic = rs.getBoolean("pub");
+            String description = rs.getString("description");
+            String coverPhotoUri = rs.getString("cover_photo");
 
             // get acl list
             stmt = conn.prepareStatement("SELECT username, role FROM " +
@@ -159,6 +165,8 @@ public class CollectionStore {
                 photoList.add(new Photo(rs.getString("uri"), rs.getString("caption"), rs.getDate("upload_date")));
 
             PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName, collectionUri, aclList);
+            photoCollection.description = description;
+            photoCollection.coverPhotoUri = coverPhotoUri;
             photoCollection.setPhotos(photoList);
 
             return photoCollection;

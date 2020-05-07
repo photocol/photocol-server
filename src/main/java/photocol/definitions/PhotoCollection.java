@@ -8,6 +8,8 @@ public class PhotoCollection {
     public List<ACLEntry> aclList;
     public String uri;
     public String owner;
+    public String description;
+    public String coverPhotoUri;
     public List<Photo> photos;
 
     // FIXME: this is a mess of constructors depending on the use case

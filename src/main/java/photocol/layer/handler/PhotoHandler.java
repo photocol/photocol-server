@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import spark.Request;
 import spark.Response;
 
+import java.io.IOException;
 import java.util.List;
 
 public class PhotoHandler {
@@ -50,8 +51,17 @@ public class PhotoHandler {
         res.header("Cache-Control", "public, max-age=3600");
         res.header("ETag", response.response().eTag());
 
-        // return response stream
-        return response;
+        // must close s3 stream for it to work properly
+        // guidance from: https://stackoverflow.com/questions/33398405/stream-a-video-file-over-http-with-spark-java
+        try {
+            response.transferTo(res.raw().getOutputStream());
+            response.close();
+            res.raw().getOutputStream().close();
+        } catch(IOException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, HttpMessageException.Error.S3_ERROR);
+        }
+        return null;
     }
 
     /**

@@ -2,28 +2,34 @@ package photocol.util;
 
 
 import java.sql.*;
-
+import javax.sql.DataSource;
+import com.zaxxer.hikari.HikariDataSource;
 public class DBConnectionClient {
-    private final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
-    private String DB_URL = System.getenv("DB_URL");
-
-    //  Database credentials
-    /* TODO: move credentials to environment variables */
-    private final String USER = "photo_server";
-    private final String PASS = "password";
-    private Connection connection = null;
+    private static final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
+    private static final String USER = "photo_server";
+    private static final String PASS = System.getenv("DB_PASS");
+    private static final String DB_URL = System.getenv("DB_URL");
+    private static HikariDataSource DBCP;
     public DBConnectionClient() {
-        try {
-            Class.forName(JDBC_DRIVER);
-            connection = DriverManager.getConnection(DB_URL, USER, PASS);
-            connection.prepareStatement("USE photocol").executeUpdate();
+        try{
+            DBCP = new HikariDataSource();
+            DBCP.setDriverClassName(JDBC_DRIVER);
+            DBCP.setJdbcUrl(DB_URL);
+            DBCP.setUsername(USER);
+            DBCP.setPassword(PASS);
+            DBCP.setMinimumIdle(50);
+            DBCP.setMaximumPoolSize(500);
+            DBCP.setLoginTimeout(5);
+            DBCP.setAutoCommit(true);
+            DBCP.setConnectionTimeout(60000);
+            DBCP.setIdleTimeout(120000);
         } catch (Exception err) {
             System.err.println("Error connecting to database.");
             err.printStackTrace();
         }
     }
 
-    public Connection getConnection() {
-        return connection;
+    public static DataSource getDataSource() {
+        return DBCP;
     }
 }

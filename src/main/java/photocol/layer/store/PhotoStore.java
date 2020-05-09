@@ -4,6 +4,7 @@ import photocol.definitions.Photo;
 import photocol.definitions.exception.HttpMessageException;
 import photocol.util.DBConnectionClient;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +12,10 @@ import java.util.List;
 import static photocol.definitions.exception.HttpMessageException.Error.*;
 
 public class PhotoStore {
+    private static DataSource dbcp;
 
-    private Connection conn;
     public PhotoStore(DBConnectionClient dbClient) {
-        conn = dbClient.getConnection();
+        dbcp = dbClient.getDataSource();
     }
 
     /**
@@ -24,13 +25,28 @@ public class PhotoStore {
      * @throws HttpMessageException on error
      */
     public boolean checkIfPhotoExists(String uri) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uri=?");
             stmt.setString(1, uri);
 
             ResultSet rs = stmt.executeQuery();
-            return rs.next();
+            boolean next = rs.next();
+            conn.close();
+            return next;
         } catch(Exception err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -43,6 +59,13 @@ public class PhotoStore {
      * @throws HttpMessageException on failure
      */
     public List<Photo> getUserPhotos(int uid) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT uri, filename, caption, upload_date, width, height " +
                     "FROM photocol.photo WHERE uid=?");
@@ -60,9 +83,15 @@ public class PhotoStore {
                                          rs.getDate("upload_date"),
                                          photoMetadata));
             }
-
+            conn.close();
             return userPhotos;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -77,6 +106,13 @@ public class PhotoStore {
      * @throws HttpMessageException on failure
      */
     public int checkPhotoPermissions(String uri, int uid, boolean checkOwner) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             // check if user owns the photo
             PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uid=? AND uri=?");
@@ -85,10 +121,16 @@ public class PhotoStore {
 
             ResultSet rs = stmt.executeQuery();
             if(rs.next())
+            {
+                conn.close();
                 return rs.getInt("pid");
+            }
 
             if(checkOwner)
+            {
+                conn.close();
                 throw new HttpMessageException(401, NOT_PHOTO_OWNER);
+            }
 
             // check if user is in one of the collections that contains the photo
             // TODO: check if this join is actually correct; not sure how to use joins
@@ -104,11 +146,20 @@ public class PhotoStore {
 
             rs = stmt.executeQuery();
             if(!rs.next())
+            {
+                conn.close();
                 throw new HttpMessageException(404, IMAGE_NOT_FOUND);
+            }
 
             // success
             return rs.getInt("pid");
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -134,6 +185,13 @@ public class PhotoStore {
      */
     public boolean createPhoto(Photo photo, int uid) throws HttpMessageException {
         // assume uri is already checked to be unique in service layer
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("INSERT INTO photocol.photo " +
                     "(uri, upload_date, mime_type, filename, width, height, uid, orig_uid) VALUES(?,?,?,?,?,?,?,?)");
@@ -148,10 +206,19 @@ public class PhotoStore {
 
             // this should never happen
             if(stmt.executeUpdate()<1)
+            {
+                conn.close();
                 throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
-
+            }
+            conn.close();
             return true;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -165,6 +232,13 @@ public class PhotoStore {
      * @throws HttpMessageException on failure
      */
     public boolean checkIfPhotoInCollection(String photouri, int cid) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT photo.pid FROM photo " +
                     "INNER JOIN icj ON photo.pid=icj.pid " +
@@ -173,8 +247,16 @@ public class PhotoStore {
             stmt.setInt(2, cid);
 
             ResultSet rs = stmt.executeQuery();
-            return rs.next();
+            boolean next = rs.next();
+            conn.close();
+            return next;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -187,13 +269,26 @@ public class PhotoStore {
      * @throws HttpMessageException on error or not owner
      */
     public boolean deletePhoto(int pid) throws HttpMessageException {
+        Connection conn = null;
         try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }try {
             // deleting from photo should cascade down to other tables gracefully
             PreparedStatement stmt = conn.prepareStatement("DELETE FROM photo WHERE photo.pid=?");
             stmt.setInt(1, pid);
             stmt.executeUpdate();
+            conn.close();
             return true;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }

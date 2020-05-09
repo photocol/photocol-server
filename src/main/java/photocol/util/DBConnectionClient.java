@@ -22,7 +22,8 @@ public class DBConnectionClient {
             DBCP.setLoginTimeout(1);
             DBCP.setAutoCommit(true);
             DBCP.setConnectionTimeout(5000);
-            DBCP.setIdleTimeout(120000);
+            DBCP.setIdleTimeout(30000);
+            DBCP.setMaxLifetime(120000);
         } catch (Exception err) {
             System.err.println("Error connecting to database.");
             err.printStackTrace();

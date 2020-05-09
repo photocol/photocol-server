@@ -17,11 +17,11 @@ public class DBConnectionClient {
             DBCP.setJdbcUrl(DB_URL);
             DBCP.setUsername(USER);
             DBCP.setPassword(PASS);
-            DBCP.setMinimumIdle(50);
+            DBCP.setMinimumIdle(5);
             DBCP.setMaximumPoolSize(500);
-            DBCP.setLoginTimeout(5);
+            DBCP.setLoginTimeout(1);
             DBCP.setAutoCommit(true);
-            DBCP.setConnectionTimeout(60000);
+            DBCP.setConnectionTimeout(5000);
             DBCP.setIdleTimeout(120000);
         } catch (Exception err) {
             System.err.println("Error connecting to database.");

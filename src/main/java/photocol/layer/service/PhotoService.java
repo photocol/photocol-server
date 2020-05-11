@@ -137,4 +137,17 @@ public class PhotoService {
 
         return true;
     }
+
+    /**
+     * Get photo details (simple passthrough)
+     * @param photouri  photouri of image
+     * @param uid       uid of accessor
+     * @return          photo details
+     * @throws HttpMessageException on error
+     */
+    public Photo details(String photouri, int uid) throws HttpMessageException {
+        int pid = this.photoStore.checkPhotoPermissions(photouri, uid, false);
+
+        return this.photoStore.details(pid);
+    }
 }

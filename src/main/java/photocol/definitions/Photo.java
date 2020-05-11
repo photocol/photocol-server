@@ -19,13 +19,6 @@ public class Photo {
         public Date captureDate;
     }
 
-    // TODO: replace this constructor with the latter one
-    public Photo(String uri, String caption, Date uploadDate) {
-        this.uri = uri;
-        this.caption = caption;
-        this.uploadDate = uploadDate;
-    }
-
     public Photo(String uri, String filename, String caption, Date uploadDate, PhotoMetadata metadata) {
         this.uri = uri;
         this.filename = filename;

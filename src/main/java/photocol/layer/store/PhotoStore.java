@@ -293,4 +293,41 @@ public class PhotoStore {
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
+
+    /**
+     * Get photo details
+     * @param pid   pid of photo
+     * @return      photo details
+     * @throws HttpMessageException on failure
+     */
+    public Photo details(int pid) throws HttpMessageException {
+        try (Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("SELECT uri, filename, mime_type, upload_date, caption, " +
+                    "uid, orig_uid, exposure_time, f_number, iso, width, height, capture_date FROM photo " +
+                    "WHERE pid=?");
+            stmt.setInt(1, pid);
+
+            ResultSet rs = stmt.executeQuery();
+            if(!rs.next())
+                throw new HttpMessageException(401, IMAGE_NOT_FOUND);
+
+            Photo.PhotoMetadata photoMetadata = new Photo.PhotoMetadata();
+            photoMetadata.mimeType = rs.getString("mime_type");
+            photoMetadata.exposureTime = rs.getDouble("exposure_time");
+            photoMetadata.fNumber = rs.getDouble("f_number");
+            photoMetadata.iso = rs.getInt("iso");
+            photoMetadata.width = rs.getInt("width");
+            photoMetadata.height = rs.getInt("height");
+            photoMetadata.captureDate = rs.getDate("capture_date");
+            Photo photo = new Photo(rs.getString("uri"),
+                    rs.getString("filename"),
+                    rs.getString("caption"),
+                    rs.getDate("upload_date"),
+                    photoMetadata);
+            return photo;
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
 }

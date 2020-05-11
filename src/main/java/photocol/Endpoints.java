@@ -47,6 +47,7 @@ public class Endpoints {
             path("/:photouri", () -> {
                 put("", photoHandler::upload, gson::toJson);
                 post("/update", photoHandler::update, gson::toJson);
+                post("/details", photoHandler::details, gson::toJson);
                 delete("", photoHandler::delete, gson::toJson);
             });
         });

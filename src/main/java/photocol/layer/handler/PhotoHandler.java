@@ -101,6 +101,20 @@ public class PhotoHandler {
     }
 
     /**
+     * Get photo details
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      photo object with details
+     * @throws HttpMessageException on error
+     */
+    public Photo details(Request req, Response res) throws HttpMessageException {
+        String photouri = req.params("photouri");
+        int uid = req.session().attribute("uid");
+
+        return this.photoService.details(photouri, uid);
+    }
+
+    /**
      * Delete image from account
      * (For removing an image from a collection, see CollectionHandler::addRemovePhoto)
      * @param req   spark request object

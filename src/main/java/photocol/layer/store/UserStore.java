@@ -217,4 +217,27 @@ public class UserStore {
         }
     }
 
+    /**
+     * Fetch details about user
+     * @param username  username whose details to fetch
+     * @return          user details
+     * @throws HttpMessageException on failure
+     */
+    public User getProfile(String username) throws HttpMessageException {
+        try(Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("SELECT email, username, display_name, profile_photo " +
+                    "FROM user WHERE username=?");
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            if(!rs.next())
+                throw new HttpMessageException(404, USER_NOT_FOUND);
+
+            return new User(rs.getString("email"), rs.getString("username"), rs.getString("display_name"), rs.getString("profile_photo"));
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
 }

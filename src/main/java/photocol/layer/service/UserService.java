@@ -36,4 +36,14 @@ public class UserService {
         return userStore.checkCredentials(user);
     }
 
+    /**
+     * Get a user's profile; simple passthrough to db
+     * @param username  username of profile to fetch
+     * @return          user object with user details on success
+     * @throws HttpMessageException
+     */
+    public User getProfile(String username) throws HttpMessageException {
+        return this.userStore.getProfile(username);
+    }
+
 }

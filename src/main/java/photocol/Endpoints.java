@@ -33,6 +33,10 @@ public class Endpoints {
             post("/login", userHandler::logIn, gson::toJson);
             get("/logout", userHandler::logOut, gson::toJson);
             get("/details", userHandler::userDetails, gson::toJson);
+            path("/profile", () -> {
+                get("", userHandler::getProfile, gson::toJson);
+                get("/:username", userHandler::getProfile, gson::toJson);
+            });
         });
 
         path("/photo", () -> {

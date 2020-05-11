@@ -48,7 +48,7 @@ public class PhotoHandler {
             return "";
         }
         res.type(response.response().contentType());
-        res.header("Cache-Control", "public, max-age=3600");
+        res.header("Cache-Control", "private, must-revalidate");
         res.header("ETag", response.response().eTag());
 
         // must close s3 stream for it to work properly

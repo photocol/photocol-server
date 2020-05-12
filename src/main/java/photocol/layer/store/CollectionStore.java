@@ -109,12 +109,13 @@ public class CollectionStore {
 
             // check if public or discoverable
             stmt = conn.prepareStatement("SELECT collection.cid FROM collection " +
-                    "WHERE collection.pub=1 OR collection.pub=2" +
                     "INNER JOIN acl ON collection.cid=acl.cid " +
-                    "WHERE acl.role=? AND acl.uid=? AND collection.uri=?");
+                    "WHERE acl.role=? AND acl.uid=? AND collection.uri=? AND (collection.pub=? OR collection.pub=?)");
             stmt.setInt(1, ACLEntry.Role.ROLE_OWNER.toInt());
             stmt.setInt(2, collectionOwnerUid);
             stmt.setString(3, collectionUri);
+            stmt.setInt(4, 1);
+            stmt.setInt(5, 1);
             rs = stmt.executeQuery();
             if(rs.next()) {
                 conn.close();

@@ -23,6 +23,7 @@ public class Endpoints {
             // no CORS setup required here -- static resource
             before("/*", this::checkLoggedIn);
             get("/:photouri", photoHandler::permalink);
+            get("/:photouri/:downloadfilename", photoHandler::permalink);
         });
 
         path("/user", () -> {

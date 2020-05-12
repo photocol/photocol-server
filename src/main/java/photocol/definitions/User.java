@@ -1,5 +1,7 @@
 package photocol.definitions;
 
+import java.util.List;
+
 public class User {
     public String username;
     public String password;
@@ -7,6 +9,7 @@ public class User {
     public String displayName;
     public String profilePhoto;
     public int profilePhotoPid;     // used only when updating profile photo
+    public List<PhotoCollection> collections;   // used only on profile page
 
     public User(String email, String username,  String password) {
         this.email = email;

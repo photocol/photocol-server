@@ -19,7 +19,7 @@ public class Photocol {
         CollectionStore collectionStore = new CollectionStore(dbClient);
         PhotoStore photoStore = new PhotoStore(dbClient);
 
-        UserService userService = new UserService(userStore, photoStore);
+        UserService userService = new UserService(userStore, photoStore, collectionStore);
         CollectionService collectionService = new CollectionService(collectionStore, photoStore, userStore);
         PhotoService photoService = new PhotoService(photoStore, s3);
 

@@ -1,6 +1,8 @@
 package photocol.layer.store;
 
 import org.springframework.security.crypto.bcrypt.BCrypt;
+import photocol.definitions.ACLEntry;
+import photocol.definitions.PhotoCollection;
 import photocol.definitions.User;
 import photocol.definitions.exception.HttpMessageException;
 import photocol.util.DBConnectionClient;

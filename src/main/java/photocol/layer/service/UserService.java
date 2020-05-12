@@ -1,9 +1,15 @@
 package photocol.layer.service;
 
+import photocol.definitions.ACLEntry;
+import photocol.definitions.PhotoCollection;
 import photocol.definitions.User;
 import photocol.definitions.exception.HttpMessageException;
+import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
 import photocol.layer.store.UserStore;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static photocol.definitions.exception.HttpMessageException.Error.*;
 
@@ -11,10 +17,12 @@ public class UserService {
 
     private UserStore userStore;
     private PhotoStore photoStore;
+    private CollectionStore collectionStore;
 
-    public UserService(UserStore userStore, PhotoStore photoStore) {
+    public UserService(UserStore userStore, PhotoStore photoStore, CollectionStore collectionStore) {
         this.userStore = userStore;
         this.photoStore = photoStore;
+        this.collectionStore = collectionStore;
     }
 
     /**
@@ -40,13 +48,34 @@ public class UserService {
     }
 
     /**
-     * Get a user's profile; simple passthrough to db
+     * Get a user's profile, including collections
      * @param username  username of profile to fetch
      * @return          user object with user details on success
      * @throws HttpMessageException
      */
     public User getProfile(String username) throws HttpMessageException {
-        return this.userStore.getProfile(username);
+        User user = this.userStore.getProfile(username);
+
+        // get collections and filter accordingly
+        // show public/discoverable collections that the user owns
+        int uid = this.userStore.getUid(username);
+        List<PhotoCollection> photoCollections = this.collectionStore.getUserCollections(uid, username)
+                .stream()
+                .filter(collection -> {
+                    // only get public/discoverable
+                    if(collection.isPublic==0)
+                        return false;
+
+                    // only get collections the user owns
+                    for(ACLEntry aclEntry : collection.aclList)
+                        if(aclEntry.username.equals(username) && aclEntry.role==ACLEntry.Role.ROLE_OWNER)
+                            return true;
+                    return false;
+                })
+                .collect(Collectors.toList());
+        user.collections = photoCollections;
+
+        return user;
     }
 
     /**

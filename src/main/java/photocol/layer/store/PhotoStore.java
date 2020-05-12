@@ -155,14 +155,39 @@ public class PhotoStore {
             stmt.setString(2, uri);
 
             rs = stmt.executeQuery();
-            if(!rs.next())
-            {
+            if(rs.next()) {
                 conn.close();
-                throw new HttpMessageException(404, IMAGE_NOT_FOUND);
+                return rs.getInt("pid");
             }
 
-            // success
-            return rs.getInt("pid");
+            // check if photo is in a public collection
+            stmt = conn.prepareStatement("SELECT photo.pid FROM photo " +
+                    "INNER JOIN icj ON photo.pid=icj.pid " +
+                    "INNER JOIN collection ON collection.cid=icj.cid " +
+                    "WHERE collection.pub=? AND photo.uri=?");
+            stmt.setInt(1, 1);
+            stmt.setString(2, uri);
+            rs = stmt.executeQuery();
+            if(rs.next()) {
+                conn.close();
+                return rs.getInt("pid");
+            }
+
+            // check if photo is the cover photo of a discoverable collection
+            stmt = conn.prepareStatement("SELECT photo.pid FROM photo " +
+                    "INNER JOIN collection ON collection.cover_photo=photo.pid " +
+                    "WHERE collection.pub=? AND photo.uri=?");
+            stmt.setInt(1, 2);
+            stmt.setString(2, uri);
+            rs = stmt.executeQuery();
+            if(rs.next()) {
+                conn.close();
+                return rs.getInt("pid");
+            }
+
+            // not found
+            conn.close();
+            throw new HttpMessageException(404, IMAGE_NOT_FOUND);
         } catch(SQLException err) {
             try {
                 conn.close();
@@ -174,17 +199,6 @@ public class PhotoStore {
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
-
-    /**
-     * Create photo in database
-     * @param uri       uri of photo
-     * @param filename  original photo filename
-     * @param uid       uid of owner
-     * @param mimeType  mimetype of file
-     * @return          true on success
-     * @throws HttpMessageException on error
-     */
-//    public boolean createImage(String uri, String filename, String mimeType, int uid) throws HttpMessageException {
 
     /**
      * Create photo in database

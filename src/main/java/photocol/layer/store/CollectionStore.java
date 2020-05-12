@@ -221,6 +221,16 @@ public class CollectionStore {
             String description = rs.getString("description");
             String coverPhotoUri = rs.getString("cover_photo");
 
+            // get acl list
+            stmt = conn.prepareStatement("SELECT username, role FROM " +
+                    "(SELECT uid, role FROM acl WHERE cid=?) as uidroles " +
+                    "INNER JOIN user ON uidroles.uid=user.uid");
+            stmt.setInt(1, cid);
+            rs = stmt.executeQuery();
+            List<ACLEntry> aclList = new ArrayList<>();
+            while(rs.next())
+                aclList.add(new ACLEntry(rs.getString("username"), rs.getInt("role")));
+
             // if only discoverable and user not in acl list, end here
             // (otherwise user is in ACL list or the collection is public, either of which is permissible to view
             // the entire collection)
@@ -232,21 +242,11 @@ public class CollectionStore {
                 rs = stmt.executeQuery();
                 if(!rs.next()) {
                     PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName,
-                            null, coverPhotoUri, description);
+                            aclList, coverPhotoUri, description);
                     conn.close();
                     return photoCollection;
                 }
             }
-
-            // get acl list
-            stmt = conn.prepareStatement("SELECT username, role FROM " +
-                    "(SELECT uid, role FROM acl WHERE cid=?) as uidroles " +
-                    "INNER JOIN user ON uidroles.uid=user.uid");
-            stmt.setInt(1, cid);
-            rs = stmt.executeQuery();
-            List<ACLEntry> aclList = new ArrayList<>();
-            while(rs.next())
-                aclList.add(new ACLEntry(rs.getString("username"), rs.getInt("role")));
 
             // get photo list
             stmt = conn.prepareStatement("SELECT uri, caption, filename, upload_date, width, height FROM photo " +

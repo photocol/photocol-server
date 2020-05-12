@@ -73,7 +73,7 @@ public class CollectionService {
         collectionStore.getUserCollectionRole(uid, cid);
 
         // get list of images in collection
-        return collectionStore.getCollection(cid);
+        return collectionStore.getCollection(uid, cid);
     }
 
     /**

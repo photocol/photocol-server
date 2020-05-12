@@ -126,7 +126,7 @@ public class EndpointRequestModel {
     // endpoint: POST /collection/:collectionname/new
     public static class NewCollectionRequest implements EndpointRequest<PhotoCollection> {
 
-        public boolean isPublic;
+        public int isPublic;
         public String name;
 
         @Override
@@ -142,7 +142,7 @@ public class EndpointRequestModel {
 
     // endpoint: POST /collection/:collectionname/update
     public static class UpdateCollectionRequest implements EndpointRequest<PhotoCollection> {
-        public boolean isPublic;
+        public int isPublic;
         public String name;
         public List<ACLEntry> aclList;
         public String description;

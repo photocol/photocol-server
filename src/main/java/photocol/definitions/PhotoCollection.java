@@ -3,7 +3,7 @@ package photocol.definitions;
 import java.util.List;
 
 public class PhotoCollection {
-    public boolean isPublic;
+    public int isPublic;
     public String name;
     public List<ACLEntry> aclList;
     public String uri;
@@ -14,14 +14,14 @@ public class PhotoCollection {
     public List<Photo> photos;
 
     // this constructor used when creating a photo collection
-    public PhotoCollection(boolean isPublic, String name) {
+    public PhotoCollection(int isPublic, String name) {
         this.isPublic = isPublic;
         this.name = name;
         this.generateUri();
     }
 
     // this constructor used for all other instances
-    public PhotoCollection(boolean isPublic, String name, List<ACLEntry> aclList, String coverPhotoUri, String description) {
+    public PhotoCollection(int isPublic, String name, List<ACLEntry> aclList, String coverPhotoUri, String description) {
         this.isPublic = isPublic;
         this.name = name;
         this.aclList = aclList;

@@ -55,7 +55,7 @@ public class CollectionStore {
                 aclList.add(new ACLEntry(username, rs.getInt("role")));
                 aclList.add(new ACLEntry(rs.getString("owner"), ACLEntry.Role.ROLE_OWNER));
 
-                photoCollections.add(new PhotoCollection(rs.getBoolean("pub"),
+                photoCollections.add(new PhotoCollection(rs.getInt("pub"),
                         rs.getString("name"),
                         aclList,
                         rs.getString("cover_photo_uri"),
@@ -92,6 +92,7 @@ public class CollectionStore {
             err.printStackTrace();
         }
         try {
+            // check if user directly in acl list
             PreparedStatement stmt = conn.prepareStatement("SELECT cid FROM acl WHERE uid=? AND cid in " +
                     "(SELECT cid FROM collection WHERE cid IN " +
                     "(SELECT cid FROM acl WHERE role=? AND uid=?) AND uri=?)");
@@ -101,13 +102,27 @@ public class CollectionStore {
             stmt.setString(4, collectionUri);
 
             ResultSet rs = stmt.executeQuery();
-            if(!rs.next())
-            {
+            if(rs.next()) {
                 conn.close();
-                return -1;
+                return rs.getInt("cid");
             }
+
+            // check if public or discoverable
+            stmt = conn.prepareStatement("SELECT collection.cid FROM collection " +
+                    "WHERE collection.pub=1 OR collection.pub=2" +
+                    "INNER JOIN acl ON collection.cid=acl.cid " +
+                    "WHERE acl.role=? AND acl.uid=? AND collection.uri=?");
+            stmt.setInt(1, ACLEntry.Role.ROLE_OWNER.toInt());
+            stmt.setInt(2, collectionOwnerUid);
+            stmt.setString(3, collectionUri);
+            rs = stmt.executeQuery();
+            if(rs.next()) {
+                conn.close();
+                return rs.getInt("cid");
+            }
+
             conn.close();
-            return rs.getInt("cid");
+            return -1;
         } catch(SQLException err) {
             try {
                 conn.close();
@@ -140,7 +155,7 @@ public class CollectionStore {
                             "VALUES (?, ?, ?);",
                     Statement.RETURN_GENERATED_KEYS);
             stmt1.setString(1, collection.name);
-            stmt1.setBoolean(2, collection.isPublic);
+            stmt1.setInt(2, collection.isPublic);
             stmt1.setString(3, collection.uri);
             stmt1.executeUpdate();
 
@@ -178,7 +193,7 @@ public class CollectionStore {
      * @return      list of photo objects from collection
      * @throws HttpMessageException on failure
      */
-    public PhotoCollection getCollection(int cid) throws HttpMessageException {
+    public PhotoCollection getCollection(int uid, int cid) throws HttpMessageException {
         Connection conn = null;
         try {
             conn = dbcp.getConnection();
@@ -201,9 +216,26 @@ public class CollectionStore {
                 throw new HttpMessageException(401, COLLECTION_NOT_FOUND);
             }
             String collectionName = rs.getString("name");
-            boolean collectionIsPublic = rs.getBoolean("pub");
+            int collectionIsPublic = rs.getInt("pub");
             String description = rs.getString("description");
             String coverPhotoUri = rs.getString("cover_photo");
+
+            // if only discoverable and user not in acl list, end here
+            // (otherwise user is in ACL list or the collection is public, either of which is permissible to view
+            // the entire collection)
+            if(collectionIsPublic==2) {
+                // quickly check if user is in collection
+                stmt = conn.prepareStatement("SELECT cid FROM acl WHERE cid=? AND uid=?");
+                stmt.setInt(1, cid);
+                stmt.setInt(2, uid);
+                rs = stmt.executeQuery();
+                if(!rs.next()) {
+                    PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName,
+                            null, coverPhotoUri, description);
+                    conn.close();
+                    return photoCollection;
+                }
+            }
 
             // get acl list
             stmt = conn.prepareStatement("SELECT username, role FROM " +

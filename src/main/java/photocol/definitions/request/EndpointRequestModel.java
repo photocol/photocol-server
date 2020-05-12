@@ -136,7 +136,7 @@ public class EndpointRequestModel {
             name = name.trim();
             PhotoCollection pc= new PhotoCollection (0, name);
             pc.generateUri();
-            if(pc.name.length()==0 || this.name.length()>50)
+            if(pc.uri.length()==0 || this.name.length()>50)
                 formatErrorHandler("NAME_FORMAT");
             if (isPublic < 0 || isPublic >2)
                 formatErrorHandler("ISPUBLIC_INVALID");

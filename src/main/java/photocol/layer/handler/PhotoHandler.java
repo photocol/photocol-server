@@ -11,6 +11,7 @@ import spark.Request;
 import spark.Response;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 public class PhotoHandler {
@@ -44,6 +45,12 @@ public class PhotoHandler {
         // caching with etags
         eTag = response.response().eTag();
         if (conditionalHeader != null && conditionalHeader.equals(eTag)) {
+            try {
+                response.close();
+            } catch (IOException err) {
+                err.printStackTrace();
+                throw new HttpMessageException(500, HttpMessageException.Error.S3_ERROR);
+            }
             res.status(304);
             return "";
         }
@@ -53,10 +60,9 @@ public class PhotoHandler {
 
         // must close s3 stream for it to work properly
         // guidance from: https://stackoverflow.com/questions/33398405/stream-a-video-file-over-http-with-spark-java
-        try {
-            response.transferTo(res.raw().getOutputStream());
+        try(OutputStream os = res.raw().getOutputStream()){
+            response.transferTo(os);
             response.close();
-            res.raw().getOutputStream().close();
         } catch(IOException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, HttpMessageException.Error.S3_ERROR);

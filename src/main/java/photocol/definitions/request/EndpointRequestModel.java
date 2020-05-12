@@ -151,20 +151,48 @@ public class EndpointRequestModel {
 
     // endpoint: POST /collection/:collectionname/update
     public static class UpdateCollectionRequest implements EndpointRequest<PhotoCollection> {
-        public int isPublic;
+        public Integer isPublic;
         public String name;
         public List<ACLEntry> aclList;
         public String description;
         public String coverPhotoUri;
 
         @Override
-        public boolean isValid() {
+        public boolean isValid() throws HttpMessageException {
+
+            // check name
+            if(name!=null) {
+                name = name.trim();
+                PhotoCollection pc= new PhotoCollection(0, name);
+                pc.generateUri();
+                if(pc.uri.length()==0 || this.name.length()>50)
+                    formatErrorHandler("NAME_FORMAT");
+            }
+
+            // check isPublic
+            if(isPublic!=null) {
+                if (isPublic<0 || isPublic >2)
+                    formatErrorHandler("ISPUBLIC_INVALID");
+            }
+
+            // check description
+            if(description!=null) {
+                description = description.trim();
+                if(description.length()>1000)
+                    formatErrorHandler("DESCRIPTION_LENGTH");
+            }
+
+            // trim cover photo uri, if applicable
+            if(coverPhotoUri!=null) {
+                coverPhotoUri = coverPhotoUri.trim();
+            }
+
             return true;
         }
 
         @Override
         public PhotoCollection toServiceType() {
-            return new PhotoCollection(isPublic, name, aclList, coverPhotoUri, description);
+            return new PhotoCollection(isPublic==null ? -1 : isPublic, name, aclList, coverPhotoUri, description);
         }
     }
 

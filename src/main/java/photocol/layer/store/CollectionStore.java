@@ -443,10 +443,27 @@ public class CollectionStore {
 
             // update cover photo, if specified
             if(photoCollection.coverPhotoUri != null) {
-                PreparedStatement stmt = conn.prepareStatement("UPDATE collection " +
-                        "SET cover_photo=(SELECT pid FROM photo WHERE uri=?) " +
-                        "WHERE cid=?");
-                stmt.setString(1, photoCollection.coverPhotoUri);
+                // removing a cover photo
+                if(photoCollection.coverPhotoUri.length()==0) {
+                    PreparedStatement stmt = conn.prepareStatement("UPDATE collection SET cover_photo=NULL WHERE cid=?");
+                    stmt.setInt(1, cid);
+                    stmt.executeUpdate();
+                }
+                // adding a cover photo
+                else {
+                    PreparedStatement stmt = conn.prepareStatement("UPDATE collection " +
+                            "SET cover_photo=(SELECT pid FROM photo WHERE uri=?) " +
+                            "WHERE cid=?");
+                    stmt.setString(1, photoCollection.coverPhotoUri);
+                    stmt.setInt(2, cid);
+                    stmt.executeUpdate();
+                }
+            }
+
+            // update public, if specified
+            if(photoCollection.isPublic != -1) {
+                PreparedStatement stmt = conn.prepareStatement("UPDATE collection SET pub=? WHERE cid=?");
+                stmt.setInt(1, photoCollection.isPublic);
                 stmt.setInt(2, cid);
                 stmt.executeUpdate();
             }

@@ -207,7 +207,7 @@ public class CollectionService {
         }
 
         // if changed cover photo, make sure that it exists in the collection
-        if(photoCollection.coverPhotoUri!=null)
+        if(photoCollection.coverPhotoUri!=null && photoCollection.coverPhotoUri.length()>0)
             if(!this.photoStore.checkIfPhotoInCollection(photoCollection.coverPhotoUri, cid))
                 throw new HttpMessageException(401, INPUT_FORMAT_ERROR, "COVER_PHOTO_NOT_IN_COLLECTION");
 

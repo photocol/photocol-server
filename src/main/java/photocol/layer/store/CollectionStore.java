@@ -37,12 +37,13 @@ public class CollectionStore {
             System.err.println("Error connecting to database.");
             err.printStackTrace();
         }try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT username as owner, pub, name, uri, description, " +
-                    "cover_photo, acl1.role " +
+            PreparedStatement stmt = conn.prepareStatement("SELECT username as owner, pub, name, collection.uri, " +
+                    "description, photo.uri as cover_photo_uri, acl1.role " +
                     "FROM collection " +
                     "INNER JOIN acl AS acl1 ON collection.cid=acl1.cid " +
                     "INNER JOIN acl AS acl2 ON collection.cid=acl2.cid " +
                     "INNER JOIN user ON acl2.uid=user.uid " +
+                    "INNER JOIN photo ON collection.cover_photo=photo.pid " +
                     "WHERE acl1.uid=? AND acl2.role=0");
             stmt.setInt(1, uid);
 
@@ -54,7 +55,11 @@ public class CollectionStore {
                 aclList.add(new ACLEntry(username, rs.getInt("role")));
                 aclList.add(new ACLEntry(rs.getString("owner"), ACLEntry.Role.ROLE_OWNER));
 
-                photoCollections.add(new PhotoCollection(rs.getBoolean("pub"), rs.getString("name"), aclList, "", ""));
+                photoCollections.add(new PhotoCollection(rs.getBoolean("pub"),
+                        rs.getString("name"),
+                        aclList,
+                        rs.getString("cover_photo_uri"),
+                        rs.getString("description")));
             }
             conn.close();
             return photoCollections;

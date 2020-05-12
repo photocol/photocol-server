@@ -130,8 +130,17 @@ public class EndpointRequestModel {
         public String name;
 
         @Override
-        public boolean isValid() {
-            return name!=null;
+        public boolean isValid() throws HttpMessageException {
+            if (name== null)
+                formatErrorHandler("NAME_MISSING");
+            name = name.trim();
+            PhotoCollection pc= new PhotoCollection (0, name);
+            pc.generateUri();
+            if(pc.name.length()==0 || this.name.length()>50)
+                formatErrorHandler("NAME_FORMAT");
+            if (isPublic < 0 || isPublic >2)
+                formatErrorHandler("ISPUBLIC_INVALID");
+            return true;
         }
 
         @Override

@@ -132,6 +132,16 @@ public class PhotoStore {
                 throw new HttpMessageException(401, NOT_PHOTO_OWNER);
             }
 
+            // check if the photo is a profile picture (always public)
+            stmt = conn.prepareStatement("SELECT pid FROM photo INNER JOIN user ON photo.pid=user.profile_photo " +
+                    "WHERE photo.uri=?");
+            stmt.setString(1, uri);
+            rs = stmt.executeQuery();
+            if(rs.next()) {
+                conn.close();
+                return rs.getInt("pid");
+            }
+
             // check if user is in one of the collections that contains the photo
             // TODO: check if this join is actually correct; not sure how to use joins
             // TODO: can probably simplify to one join if duplicate photouri to icj table

@@ -6,6 +6,7 @@ public class User {
     public String email;
     public String displayName;
     public String profilePhoto;
+    public int profilePhotoPid;     // used only when updating profile photo
 
     public User(String email, String username,  String password) {
         this.email = email;

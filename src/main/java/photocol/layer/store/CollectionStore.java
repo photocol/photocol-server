@@ -43,7 +43,7 @@ public class CollectionStore {
                     "INNER JOIN acl AS acl1 ON collection.cid=acl1.cid " +
                     "INNER JOIN acl AS acl2 ON collection.cid=acl2.cid " +
                     "INNER JOIN user ON acl2.uid=user.uid " +
-                    "INNER JOIN photo ON collection.cover_photo=photo.pid " +
+                    "LEFT JOIN photo ON collection.cover_photo=photo.pid " +
                     "WHERE acl1.uid=? AND acl2.role=0");
             stmt.setInt(1, uid);
 

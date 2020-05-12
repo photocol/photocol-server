@@ -21,6 +21,40 @@ public class EndpointRequestModel {
         throw new HttpMessageException(400, HttpMessageException.Error.INPUT_FORMAT_ERROR, message);
     }
 
+    // endpoint: POST /user/update
+    public static class UpdateUserRequest implements EndpointRequest<User> {
+        // for now, these are the only two fields that can be modified
+        public String displayName;
+        public String profilePhoto;
+
+        @Override
+        public boolean isValid() throws HttpMessageException {
+            // valid displayname can be null (no displayname), or a string with max length 50
+            if(displayName!=null) {
+                displayName = displayName.trim();
+                if(displayName.length()==0) {
+                    displayName = null;
+                } else {
+                    if(displayName.length()>50)
+                        formatErrorHandler("DISPLAY_NAME_LENGTH");
+                }
+            }
+
+            // profile photo will be checked later; do basic formatting in preparation
+            if(profilePhoto!=null) {
+                profilePhoto = profilePhoto.trim().toLowerCase();
+                if(profilePhoto.length()==0)
+                    profilePhoto = null;
+            }
+            return true;
+        }
+
+        @Override
+        public User toServiceType() {
+            return new User(null, null, displayName, profilePhoto);
+        }
+    }
+
     // endpoint: POST /user/signup
     public static class SignupRequest implements EndpointRequest<User> {
         public String username;

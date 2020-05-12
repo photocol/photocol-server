@@ -117,4 +117,23 @@ public class UserHandler {
 
         return this.userService.getProfile(username);
     }
+
+    /**
+     * Update a user's profile
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(Request req, Response res) throws HttpMessageException {
+        try {
+            UpdateUserRequest updateUserRequest = gson.fromJson(req.body(), UpdateUserRequest.class);
+            if(updateUserRequest==null || !updateUserRequest.isValid())
+                throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
+
+            return this.userService.update(updateUserRequest.toServiceType(), req.session().attribute("uid"));
+        } catch(JsonParseException err) {
+            throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
+        }
+    }
 }

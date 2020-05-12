@@ -225,16 +225,44 @@ public class UserStore {
      */
     public User getProfile(String username) throws HttpMessageException {
         try(Connection conn = dbcp.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement("SELECT email, username, display_name, profile_photo " +
-                    "FROM user WHERE username=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT email, username, display_name, photo.uri as profile_photo_uri " +
+                    "FROM user " +
+                    "LEFT JOIN photo ON user.profile_photo=photo.pid " +
+                    "WHERE username=?");
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
 
             if(!rs.next())
                 throw new HttpMessageException(404, USER_NOT_FOUND);
 
-            return new User(rs.getString("email"), rs.getString("username"), rs.getString("display_name"), rs.getString("profile_photo"));
+            return new User(rs.getString("email"),
+                    rs.getString("username"),
+                    rs.getString("display_name"),
+                    rs.getString("profile_photo_uri"));
         } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Update user fields
+     * @param fields    fields to update
+     * @param uid       user uid
+     * @return          true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(User fields, int uid) throws HttpMessageException {
+        try(Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("UPDATE user SET display_name=?, profile_photo=? " +
+                    "WHERE uid=?");
+            stmt.setString(1, fields.displayName);
+            stmt.setObject(2, fields.profilePhoto==null?null:fields.profilePhotoPid);
+            stmt.setInt(3, uid);
+
+            stmt.executeUpdate();
+            return true;
+        } catch (SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }

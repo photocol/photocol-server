@@ -114,16 +114,20 @@ public class PhotoStore {
             err.printStackTrace();
         }
         try {
-            // check if user owns the photo
-            PreparedStatement stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uid=? AND uri=?");
-            stmt.setInt(1, uid);
-            stmt.setString(2, uri);
+            PreparedStatement stmt;
+            ResultSet rs;
+            if(uid!=-1) {
+                // check if user owns the photo
+                stmt = conn.prepareStatement("SELECT pid FROM photocol.photo WHERE uid=? AND uri=?");
+                stmt.setInt(1, uid);
+                stmt.setString(2, uri);
 
-            ResultSet rs = stmt.executeQuery();
-            if(rs.next())
-            {
-                conn.close();
-                return rs.getInt("pid");
+                rs = stmt.executeQuery();
+                if(rs.next())
+                {
+                    conn.close();
+                    return rs.getInt("pid");
+                }
             }
 
             if(checkOwner)
@@ -142,22 +146,24 @@ public class PhotoStore {
                 return rs.getInt("pid");
             }
 
-            // check if user is in one of the collections that contains the photo
-            // TODO: check if this join is actually correct; not sure how to use joins
-            // TODO: can probably simplify to one join if duplicate photouri to icj table
-            // TODO: check public attribute of collections
-            stmt = conn.prepareStatement("SELECT photocol.photo.pid " +
-                    "FROM photocol.acl " +
-                    "INNER JOIN photocol.icj ON photocol.acl.cid=photocol.icj.cid " +
-                    "INNER JOIN photocol.photo ON photocol.photo.pid=photocol.icj.pid " +
-                    "WHERE photocol.acl.uid=? AND photocol.photo.uri=?");
-            stmt.setInt(1, uid);
-            stmt.setString(2, uri);
+            if(uid!=-1) {
+                // check if user is in one of the collections that contains the photo
+                // TODO: check if this join is actually correct; not sure how to use joins
+                // TODO: can probably simplify to one join if duplicate photouri to icj table
+                // TODO: check public attribute of collections
+                stmt = conn.prepareStatement("SELECT photocol.photo.pid " +
+                        "FROM photocol.acl " +
+                        "INNER JOIN photocol.icj ON photocol.acl.cid=photocol.icj.cid " +
+                        "INNER JOIN photocol.photo ON photocol.photo.pid=photocol.icj.pid " +
+                        "WHERE photocol.acl.uid=? AND photocol.photo.uri=?");
+                stmt.setInt(1, uid);
+                stmt.setString(2, uri);
 
-            rs = stmt.executeQuery();
-            if(rs.next()) {
-                conn.close();
-                return rs.getInt("pid");
+                rs = stmt.executeQuery();
+                if(rs.next()) {
+                    conn.close();
+                    return rs.getInt("pid");
+                }
             }
 
             // check if photo is in a public collection

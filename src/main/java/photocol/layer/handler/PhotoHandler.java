@@ -13,6 +13,7 @@ import spark.Response;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 
 public class PhotoHandler {
 
@@ -38,7 +39,9 @@ public class PhotoHandler {
         String conditionalHeader = req.headers("If-None-Match");
         String eTag;
 
-        int uid = req.session().attribute("uid");
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            uid = -1;
 
         ResponseInputStream<GetObjectResponse> response = photoService.permalink(uri, uid);
 

@@ -237,4 +237,33 @@ public class CollectionService {
 
         return collectionStore.deleteCollection(cid);
     }
+
+    /**
+     * Leave a collection
+     * @param collectionUri
+     * @param collectionOwner
+     * @param uid
+     * @return
+     * @throws HttpMessageException
+     */
+    public boolean leaveCollection(String collectionUri, String collectionOwner, int uid) throws HttpMessageException {
+        // check that collection exists
+        int collectionOwnerUid = userStore.getUid(collectionOwner);
+        int cid = collectionStore.checkIfCollectionExists(uid, collectionOwnerUid, collectionUri);
+        if(cid==-1)
+            throw new HttpMessageException(401, COLLECTION_NOT_FOUND);
+
+        // get user role in collection; if owner, make sure no other users in collection, and then delete it
+        ACLEntry.Role role = ACLEntry.Role.fromInt(collectionStore.getUserCollectionRole(uid, cid));
+        if(role==ACLEntry.Role.ROLE_OWNER) {
+            List<ACLEntry> aclList = collectionStore.getAclList(cid);
+            if(aclList.size()>1)
+                throw new HttpMessageException(401, CANNOT_LEAVE_NONEMPTY_COLLECTION_AS_OWNER);
+
+            // delete collection
+            return this.collectionStore.deleteCollection(cid);
+        }
+
+        return this.collectionStore.leaveCollection(cid, uid);
+    }
 }

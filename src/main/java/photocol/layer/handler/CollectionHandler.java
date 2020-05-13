@@ -139,4 +139,22 @@ public class CollectionHandler {
         return collectionService.deleteCollection(uid, collectionUri);
     }
 
+    /**
+     * Leave a collection
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean leaveCollection(Request req, Response res) throws HttpMessageException {
+        int uid = req.session().attribute("uid");
+
+        String collectionuri = req.params("collectionuri");
+        String collectionOwner = req.params("username");
+        if(collectionuri==null || collectionOwner==null)
+            throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
+
+        return this.collectionService.leaveCollection(collectionuri, collectionOwner, uid);
+    }
+
 }

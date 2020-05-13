@@ -198,6 +198,12 @@ public class CollectionService {
 
         // make sure new uri is unique for the current user (if owner) or new owner, if applicable
         if(photoCollection.name!=null || newOwnerUid!=uid) {
+            // need to fetch uri if not specified
+            if(photoCollection.uri==null) {
+                PhotoCollection pc = this.collectionStore.getCollection(newOwnerUid, cid);
+                photoCollection.uri = pc.uri;
+            }
+
             int cidSameName = collectionStore.checkIfCollectionExists(newOwnerUid, newOwnerUid, photoCollection.uri);
             if (cidSameName!=-1 && cidSameName!=cid)
                 throw new HttpMessageException(401, COLLECTION_NAME_NOT_UNIQUE);

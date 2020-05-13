@@ -584,6 +584,13 @@ public class CollectionStore {
         }
     }
 
+    /**
+     * Have a user leave a collection
+     * @param cid   collection cid
+     * @param uid   user uid
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
     public boolean leaveCollection(int cid, int uid) throws HttpMessageException {
         try(Connection conn = dbcp.getConnection()) {
             PreparedStatement stmt = conn.prepareStatement("DELETE FROM acl WHERE cid=? AND uid=?");
@@ -593,6 +600,58 @@ public class CollectionStore {
             stmt.executeUpdate();
             return true;
         } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Get all public collections
+     * @return  list of public/discoverable collections
+     * @throws HttpMessageException on failure
+     */
+    public List<PhotoCollection> getPublicCollections() throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT username as owner, pub, name, collection.uri, description, " +
+                    "photo.uri as cover_photo_uri FROM collection " +
+                    "INNER JOIN acl ON collection.cid=acl.cid " +
+                    "INNER JOIN user ON user.uid=acl.uid " +
+                    "LEFT JOIN photo on collection.cover_photo=photo.pid " +
+                    "WHERE acl.role=0 AND (collection.pub=? OR collection.pub=?)");
+            stmt.setInt(1, 1);
+            stmt.setInt(2, 2);
+
+            ResultSet rs = stmt.executeQuery();
+            List<PhotoCollection> photoCollections = new ArrayList<>();
+            while(rs.next()) {
+                // here, aclList just indicates the current user's role and owner only, not full aclList
+                List<ACLEntry> aclList = new ArrayList<>();
+                aclList.add(new ACLEntry(rs.getString("owner"), ACLEntry.Role.ROLE_OWNER));
+
+                PhotoCollection pc = new PhotoCollection(rs.getInt("pub"),
+                        rs.getString("name"),
+                        aclList,
+                        rs.getString("cover_photo_uri"),
+                        rs.getString("description"));
+                pc.owner = rs.getString("owner");
+
+                photoCollections.add(pc);
+            }
+            conn.close();
+            return photoCollections;
+        } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }

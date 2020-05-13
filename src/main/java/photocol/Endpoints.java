@@ -35,6 +35,9 @@ public class Endpoints {
                 before("", this::setupCors);
                 get("", collectionHandler::getCollection, gson::toJson);
             });
+
+            before("/collections/public", this::setupCors);
+            get("/collections/public", collectionHandler::getPublicCollections, gson::toJson);
         });
 
         // for user data/settings, most don't require login

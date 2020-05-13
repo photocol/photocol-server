@@ -7,6 +7,8 @@ import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.store.CollectionStore;
 import photocol.layer.store.PhotoStore;
 import photocol.layer.store.UserStore;
+import spark.Request;
+import spark.Response;
 
 import java.util.HashMap;
 import java.util.List;
@@ -265,5 +267,14 @@ public class CollectionService {
         }
 
         return this.collectionStore.leaveCollection(cid, uid);
+    }
+
+    /**
+     * Get a list of public collections
+     * @return      list of public collections
+     * @throws HttpMessageException on failure
+     */
+    public List<PhotoCollection> getPublicCollections() throws HttpMessageException {
+        return this.collectionStore.getPublicCollections();
     }
 }

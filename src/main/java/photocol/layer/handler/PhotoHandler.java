@@ -118,7 +118,9 @@ public class PhotoHandler {
      */
     public Photo details(Request req, Response res) throws HttpMessageException {
         String photouri = req.params("photouri");
-        int uid = req.session().attribute("uid");
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            uid=-1;
 
         return this.photoService.details(photouri, uid);
     }

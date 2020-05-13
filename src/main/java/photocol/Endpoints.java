@@ -20,9 +20,15 @@ public class Endpoints {
                      SearchHandler searchHandler, Gson gson) {
 
         path("/perma", () -> {
-            // no CORS setup required here -- static resource
-            get("/:photouri", photoHandler::permalink);
-            get("/:photouri/:downloadfilename", photoHandler::permalink);
+            // no CORS setup required for static resource (image)
+            // login not required for pictures and collections (i.e., public)
+            path("/:photouri", () -> {
+                before("/details", this::setupCors);
+
+                get("", photoHandler::permalink);
+                get("/download/:downloadfilename", photoHandler::permalink);
+                get("/details", photoHandler::details, gson::toJson);
+            });
         });
 
         path("/user", () -> {
@@ -48,7 +54,6 @@ public class Endpoints {
             path("/:photouri", () -> {
                 put("", photoHandler::upload, gson::toJson);
                 post("/update", photoHandler::update, gson::toJson);
-                post("/details", photoHandler::details, gson::toJson);
                 delete("", photoHandler::delete, gson::toJson);
             });
         });

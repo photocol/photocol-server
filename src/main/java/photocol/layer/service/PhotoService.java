@@ -152,4 +152,17 @@ public class PhotoService {
 
         return this.photoStore.details(pid);
     }
+
+    /**
+     * Update photo details
+     * @param photo attributes of photo to update
+     * @param uid   uid of owner
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(Photo photo, int uid) throws HttpMessageException {
+        int pid = this.photoStore.checkPhotoPermissions(photo.uri, uid, true);
+
+        return this.photoStore.update(photo, pid);
+    }
 }

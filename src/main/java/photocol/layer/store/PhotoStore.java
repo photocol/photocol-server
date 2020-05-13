@@ -360,4 +360,26 @@ public class PhotoStore {
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
+
+    /**
+     * Update photo
+     * @param photo attributes to upate
+     * @param pid   photo pid
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(Photo photo, int pid) throws HttpMessageException {
+        try(Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("UPDATE photo SET caption=?, filename=? WHERE pid=?");
+            stmt.setString(1, photo.caption);
+            stmt.setString(2, photo.filename);
+            stmt.setInt(3, pid);
+
+            stmt.executeUpdate();
+            return true;
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
 }

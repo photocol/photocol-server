@@ -3,6 +3,7 @@ package photocol.layer.handler;
 import com.google.gson.Gson;
 import photocol.definitions.Photo;
 import photocol.definitions.exception.HttpMessageException;
+import photocol.definitions.request.EndpointRequestModel;
 import photocol.layer.service.PhotoService;
 import photocol.util.S3ConnectionClient;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -105,8 +106,16 @@ public class PhotoHandler {
      * @throws HttpMessageException on failure
      */
     public boolean update(Request req, Response res) throws HttpMessageException {
-        // TODO: working here
-        return false;
+        EndpointRequestModel.PhotoUpdateRequest photoUpdateRequest = gson.fromJson(req.body(), EndpointRequestModel.PhotoUpdateRequest.class);
+        if(photoUpdateRequest==null || !photoUpdateRequest.isValid())
+            throw new HttpMessageException(401, HttpMessageException.Error.INPUT_FORMAT_ERROR);
+
+        String photouri = req.params("photouri");
+        Photo photo = photoUpdateRequest.toServiceType();
+        photo.uri = photouri;
+
+        int uid = req.session().attribute("uid");
+        return this.photoService.update(photo, uid);
     }
 
     /**

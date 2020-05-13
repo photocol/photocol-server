@@ -157,4 +157,15 @@ public class CollectionHandler {
         return this.collectionService.leaveCollection(collectionuri, collectionOwner, uid);
     }
 
+    /**
+     * Get a list of public collections
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      list of public collections
+     * @throws HttpMessageException on failure
+     */
+    public List<PhotoCollection> getPublicCollections(Request req, Response res) throws HttpMessageException {
+        return this.collectionService.getPublicCollections();
+    }
+
 }

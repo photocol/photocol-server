@@ -332,8 +332,9 @@ public class PhotoStore {
      */
     public Photo details(int pid) throws HttpMessageException {
         try (Connection conn = dbcp.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri, filename, mime_type, upload_date, caption, " +
-                    "uid, orig_uid, exposure_time, f_number, iso, width, height, capture_date FROM photo " +
+            PreparedStatement stmt = conn.prepareStatement("SELECT username, uri, filename, mime_type, upload_date, caption, " +
+                    "orig_uid, exposure_time, f_number, iso, width, height, capture_date FROM photo " +
+                    "INNER JOIN user ON photo.uid=user.uid " +
                     "WHERE pid=?");
             stmt.setInt(1, pid);
 
@@ -354,6 +355,8 @@ public class PhotoStore {
                     rs.getString("caption"),
                     rs.getDate("upload_date"),
                     photoMetadata);
+            String username = rs.getString("username");
+            photo.ownerUsername = username;
             return photo;
         } catch(SQLException err) {
             err.printStackTrace();

@@ -247,6 +247,7 @@ public class CollectionStore {
                 if(!rs.next()) {
                     PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName,
                             aclList, coverPhotoUri, description);
+                    photoCollection.setPhotos(new ArrayList<>());
                     conn.close();
                     return photoCollection;
                 }

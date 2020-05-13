@@ -69,9 +69,6 @@ public class CollectionService {
         if(cid==-1)
             throw new HttpMessageException(404, COLLECTION_NOT_FOUND);
 
-        // make sure user has access to collection
-        collectionStore.getUserCollectionRole(uid, cid);
-
         // get list of images in collection
         return collectionStore.getCollection(uid, cid);
     }

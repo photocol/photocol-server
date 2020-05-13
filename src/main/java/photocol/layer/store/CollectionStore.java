@@ -92,19 +92,23 @@ public class CollectionStore {
             err.printStackTrace();
         }
         try {
-            // check if user directly in acl list
-            PreparedStatement stmt = conn.prepareStatement("SELECT cid FROM acl WHERE uid=? AND cid in " +
-                    "(SELECT cid FROM collection WHERE cid IN " +
-                    "(SELECT cid FROM acl WHERE role=? AND uid=?) AND uri=?)");
-            stmt.setInt(1, uid);
-            stmt.setInt(2, ACLEntry.Role.ROLE_OWNER.toInt());
-            stmt.setInt(3, collectionOwnerUid);
-            stmt.setString(4, collectionUri);
+            PreparedStatement stmt;
+            ResultSet rs;
+            if(uid!=-1) {
+                // check if user directly in acl list
+                stmt = conn.prepareStatement("SELECT cid FROM acl WHERE uid=? AND cid in " +
+                        "(SELECT cid FROM collection WHERE cid IN " +
+                        "(SELECT cid FROM acl WHERE role=? AND uid=?) AND uri=?)");
+                stmt.setInt(1, uid);
+                stmt.setInt(2, ACLEntry.Role.ROLE_OWNER.toInt());
+                stmt.setInt(3, collectionOwnerUid);
+                stmt.setString(4, collectionUri);
 
-            ResultSet rs = stmt.executeQuery();
-            if(rs.next()) {
-                conn.close();
-                return rs.getInt("cid");
+                rs = stmt.executeQuery();
+                if(rs.next()) {
+                    conn.close();
+                    return rs.getInt("cid");
+                }
             }
 
             // check if public or discoverable
@@ -115,7 +119,7 @@ public class CollectionStore {
             stmt.setInt(2, collectionOwnerUid);
             stmt.setString(3, collectionUri);
             stmt.setInt(4, 1);
-            stmt.setInt(5, 1);
+            stmt.setInt(5, 2);
             rs = stmt.executeQuery();
             if(rs.next()) {
                 conn.close();
@@ -214,7 +218,7 @@ public class CollectionStore {
             if(!rs.next())
             {
                 conn.close();
-                throw new HttpMessageException(401, COLLECTION_NOT_FOUND);
+                throw new HttpMessageException(404, COLLECTION_NOT_FOUND);
             }
             String collectionName = rs.getString("name");
             int collectionIsPublic = rs.getInt("pub");

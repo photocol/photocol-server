@@ -235,7 +235,7 @@ public class EndpointRequestModel {
                 formatErrorHandler("FILENAME_LENGTH");
 
             if(filenamePattern.matcher(filename).matches())
-                formatErrorHandler("INVALID FILENAME");
+                formatErrorHandler("INVALID_FILENAME");
 
             return true;
         }

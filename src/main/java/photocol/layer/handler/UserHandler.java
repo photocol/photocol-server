@@ -2,6 +2,7 @@ package photocol.layer.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import photocol.definitions.User;
 import photocol.definitions.exception.HttpMessageException;
 import photocol.definitions.request.EndpointRequestModel.*;
 import photocol.layer.service.UserService;
@@ -92,8 +93,47 @@ public class UserHandler {
      * @return      username if logged in
      */
     public String userDetails(Request req, Response res) {
-        res.type("application/json");
         return req.session().attribute("username");
     }
 
+    /**
+     * Get user profile details
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      user details
+     * @throws HttpMessageException
+     */
+    public User getProfile(Request req, Response res) throws HttpMessageException {
+        // if no username provided, get current username
+        String username;
+        if(req.params("username")==null || req.params("username").length()==0) {
+            if(req.session().attribute("uid")==null)
+                throw new HttpMessageException(401, NOT_LOGGED_IN);
+
+            username = req.session().attribute("username");
+        } else {
+            username = req.params("username");
+        }
+
+        return this.userService.getProfile(username);
+    }
+
+    /**
+     * Update a user's profile
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(Request req, Response res) throws HttpMessageException {
+        try {
+            UpdateUserRequest updateUserRequest = gson.fromJson(req.body(), UpdateUserRequest.class);
+            if(updateUserRequest==null || !updateUserRequest.isValid())
+                throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
+
+            return this.userService.update(updateUserRequest.toServiceType(), req.session().attribute("uid"));
+        } catch(JsonParseException err) {
+            throw new HttpMessageException(400, INPUT_FORMAT_ERROR);
+        }
+    }
 }

@@ -3,39 +3,39 @@ package photocol.definitions;
 import java.util.List;
 
 public class PhotoCollection {
-    public boolean isPublic;
+    public int isPublic;
     public String name;
     public List<ACLEntry> aclList;
     public String uri;
     public String owner;
+    public String description;
+    public String coverPhotoUri;
+    public int coverPhotoPid;
     public List<Photo> photos;
 
-    // FIXME: this is a mess of constructors depending on the use case
-    public PhotoCollection(boolean isPublic, String name) {
+    // this constructor used when creating a photo collection
+    public PhotoCollection(int isPublic, String name) {
         this.isPublic = isPublic;
         this.name = name;
-        this.generateUri();
-    }
-    public PhotoCollection(boolean isPublic, String name, List<ACLEntry> aclList) {
-        this.isPublic = isPublic;
-        this.name = name;
-        this.aclList = aclList;
-        this.generateUri();
-    }
-    public PhotoCollection(boolean isPublic, String name, String uri, List<ACLEntry> aclList) {
-        this.isPublic = isPublic;
-        this.name = name;
-        this.uri = uri;
-        this.aclList = aclList;
         this.generateUri();
     }
 
+    // this constructor used for all other instances
+    public PhotoCollection(int isPublic, String name, List<ACLEntry> aclList, String coverPhotoUri, String description) {
+        this.isPublic = isPublic;
+        this.name = name;
+        this.aclList = aclList;
+        this.coverPhotoUri = coverPhotoUri;
+        this.description = description;
+        this.generateUri();
+    }
+
+    // photolist only set when receiving photos
     public void setPhotos(List<Photo> photos) {
         this.photos = photos;
     }
 
     // generate URI from name
-    // TODO: update this later
     public void generateUri() {
         if(name==null) return;
         uri = name.toLowerCase().replaceAll(" ", "-").replaceAll("[^a-zA-Z0-9\\-]", "");

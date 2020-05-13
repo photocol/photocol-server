@@ -10,7 +10,10 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import spark.Request;
 import spark.Response;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 
 public class PhotoHandler {
 
@@ -36,22 +39,38 @@ public class PhotoHandler {
         String conditionalHeader = req.headers("If-None-Match");
         String eTag;
 
-        int uid = req.session().attribute("uid");
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            uid = -1;
 
         ResponseInputStream<GetObjectResponse> response = photoService.permalink(uri, uid);
 
         // caching with etags
         eTag = response.response().eTag();
         if (conditionalHeader != null && conditionalHeader.equals(eTag)) {
+            try {
+                response.close();
+            } catch (IOException err) {
+                err.printStackTrace();
+                throw new HttpMessageException(500, HttpMessageException.Error.S3_ERROR);
+            }
             res.status(304);
             return "";
         }
         res.type(response.response().contentType());
-        res.header("Cache-Control", "public, max-age=3600");
+        res.header("Cache-Control", "private, must-revalidate");
         res.header("ETag", response.response().eTag());
 
-        // return response stream
-        return response;
+        // must close s3 stream for it to work properly
+        // guidance from: https://stackoverflow.com/questions/33398405/stream-a-video-file-over-http-with-spark-java
+        try(OutputStream os = res.raw().getOutputStream()){
+            response.transferTo(os);
+            response.close();
+        } catch(IOException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, HttpMessageException.Error.S3_ERROR);
+        }
+        return null;
     }
 
     /**
@@ -88,6 +107,22 @@ public class PhotoHandler {
     public boolean update(Request req, Response res) throws HttpMessageException {
         // TODO: working here
         return false;
+    }
+
+    /**
+     * Get photo details
+     * @param req   spark request object
+     * @param res   spark response object
+     * @return      photo object with details
+     * @throws HttpMessageException on error
+     */
+    public Photo details(Request req, Response res) throws HttpMessageException {
+        String photouri = req.params("photouri");
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            uid=-1;
+
+        return this.photoService.details(photouri, uid);
     }
 
     /**

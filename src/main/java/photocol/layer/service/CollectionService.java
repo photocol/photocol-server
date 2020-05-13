@@ -69,11 +69,8 @@ public class CollectionService {
         if(cid==-1)
             throw new HttpMessageException(404, COLLECTION_NOT_FOUND);
 
-        // make sure user has access to collection
-        collectionStore.getUserCollectionRole(uid, cid);
-
         // get list of images in collection
-        return collectionStore.getCollection(cid);
+        return collectionStore.getCollection(uid, cid);
     }
 
     /**
@@ -178,7 +175,7 @@ public class CollectionService {
                 // removing user, checks if already exists in acl list
                 if(entry.role==ACLEntry.Role.ROLE_NONE) {
                     if(!aclMap.containsKey(entry.uid))
-                        throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "REMOVING USER NOT IN COLLECTION");
+                        throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "REMOVING USER_NOT_IN_COLLECTION");
 
                     entry.setOperation(ACLEntry.ACLOperation.OP_DELETE);
                     aclMap.put(entry.uid, entry.role);
@@ -195,14 +192,27 @@ public class CollectionService {
 
                 // shouldn't happen, just a check that the above conditionals cover all possible cases
                 if(entry.operation==null)
-                    throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "UNRECOGNIZED ACL ACTION");
+                    throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "UNRECOGNIZED_ACL_ACTION");
             }
         }
 
         // make sure new uri is unique for the current user (if owner) or new owner, if applicable
-        if(photoCollection.name!=null || newOwnerUid!=uid)
-            if(collectionStore.checkIfCollectionExists(newOwnerUid, newOwnerUid, collectionUri)!=-1)
+        if(photoCollection.name!=null || newOwnerUid!=uid) {
+            // need to fetch uri if not specified
+            if(photoCollection.uri==null) {
+                PhotoCollection pc = this.collectionStore.getCollection(newOwnerUid, cid);
+                photoCollection.uri = pc.uri;
+            }
+
+            int cidSameName = collectionStore.checkIfCollectionExists(newOwnerUid, newOwnerUid, photoCollection.uri);
+            if (cidSameName!=-1 && cidSameName!=cid)
                 throw new HttpMessageException(401, COLLECTION_NAME_NOT_UNIQUE);
+        }
+
+        // if changed cover photo, make sure that it exists in the collection
+        if(photoCollection.coverPhotoUri!=null && photoCollection.coverPhotoUri.length()>0)
+            if(!this.photoStore.checkIfPhotoInCollection(photoCollection.coverPhotoUri, cid))
+                throw new HttpMessageException(401, INPUT_FORMAT_ERROR, "COVER_PHOTO_NOT_IN_COLLECTION");
 
         // update collection with parameters
         return collectionStore.update(cid, photoCollection, uid);

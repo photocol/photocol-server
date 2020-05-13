@@ -4,7 +4,9 @@ import photocol.definitions.ACLEntry;
 import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.exception.HttpMessageException;
-import photocol.layer.DataBase.Method.InitDB;
+import photocol.util.DBConnectionClient;
+
+import javax.sql.DataSource;
 
 import static photocol.definitions.ACLEntry.ACLOperation.*;
 import static photocol.definitions.exception.HttpMessageException.Error.*;
@@ -12,13 +14,12 @@ import static photocol.definitions.exception.HttpMessageException.Error.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class CollectionStore {
 
-    private Connection conn;
-    public CollectionStore() {
-        this.conn = new InitDB().initialDB("photocol");
+    private DataSource dbcp;
+    public CollectionStore(DBConnectionClient dbClient) {
+        dbcp = dbClient.getDataSource();
     }
 
     /**
@@ -29,12 +30,20 @@ public class CollectionStore {
      * @throws HttpMessageException on failure
      */
     public List<PhotoCollection> getUserCollections(int uid, String username) throws HttpMessageException {
+        Connection conn = null;
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT username as owner, pub, name, uri, acl1.role " +
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }try {
+            PreparedStatement stmt = conn.prepareStatement("SELECT username as owner, pub, name, collection.uri, " +
+                    "description, photo.uri as cover_photo_uri, acl1.role " +
                     "FROM collection " +
                     "INNER JOIN acl AS acl1 ON collection.cid=acl1.cid " +
                     "INNER JOIN acl AS acl2 ON collection.cid=acl2.cid " +
                     "INNER JOIN user ON acl2.uid=user.uid " +
+                    "LEFT JOIN photo ON collection.cover_photo=photo.pid " +
                     "WHERE acl1.uid=? AND acl2.role=0");
             stmt.setInt(1, uid);
 
@@ -46,10 +55,21 @@ public class CollectionStore {
                 aclList.add(new ACLEntry(username, rs.getInt("role")));
                 aclList.add(new ACLEntry(rs.getString("owner"), ACLEntry.Role.ROLE_OWNER));
 
-                photoCollections.add(new PhotoCollection(rs.getBoolean("pub"), rs.getString("name"), aclList));
+                photoCollections.add(new PhotoCollection(rs.getInt("pub"),
+                        rs.getString("name"),
+                        aclList,
+                        rs.getString("cover_photo_uri"),
+                        rs.getString("description")));
             }
+            conn.close();
             return photoCollections;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -63,23 +83,58 @@ public class CollectionStore {
      * @return                      cid if exists; -1 if not
      * @throws HttpMessageException on failure
      */
-    public int checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri)
-            throws HttpMessageException {
+    public int checkIfCollectionExists(int uid, int collectionOwnerUid, String collectionUri) throws HttpMessageException {
+        Connection conn = null;
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT cid FROM acl WHERE uid=? AND cid in " +
-                    "(SELECT cid FROM collection WHERE cid IN " +
-                    "(SELECT cid FROM acl WHERE role=? AND uid=?) AND uri=?)");
-            stmt.setInt(1, uid);
-            stmt.setInt(2, ACLEntry.Role.ROLE_OWNER.toInt());
-            stmt.setInt(3, collectionOwnerUid);
-            stmt.setString(4, collectionUri);
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
+        try {
+            PreparedStatement stmt;
+            ResultSet rs;
+            if(uid!=-1) {
+                // check if user directly in acl list
+                stmt = conn.prepareStatement("SELECT cid FROM acl WHERE uid=? AND cid in " +
+                        "(SELECT cid FROM collection WHERE cid IN " +
+                        "(SELECT cid FROM acl WHERE role=? AND uid=?) AND uri=?)");
+                stmt.setInt(1, uid);
+                stmt.setInt(2, ACLEntry.Role.ROLE_OWNER.toInt());
+                stmt.setInt(3, collectionOwnerUid);
+                stmt.setString(4, collectionUri);
 
-            ResultSet rs = stmt.executeQuery();
-            if(!rs.next())
-                return -1;
+                rs = stmt.executeQuery();
+                if(rs.next()) {
+                    conn.close();
+                    return rs.getInt("cid");
+                }
+            }
 
-            return rs.getInt("cid");
+            // check if public or discoverable
+            stmt = conn.prepareStatement("SELECT collection.cid FROM collection " +
+                    "INNER JOIN acl ON collection.cid=acl.cid " +
+                    "WHERE acl.role=? AND acl.uid=? AND collection.uri=? AND (collection.pub=? OR collection.pub=?)");
+            stmt.setInt(1, ACLEntry.Role.ROLE_OWNER.toInt());
+            stmt.setInt(2, collectionOwnerUid);
+            stmt.setString(3, collectionUri);
+            stmt.setInt(4, 1);
+            stmt.setInt(5, 2);
+            rs = stmt.executeQuery();
+            if(rs.next()) {
+                conn.close();
+                return rs.getInt("cid");
+            }
+
+            conn.close();
+            return -1;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -93,19 +148,29 @@ public class CollectionStore {
      * @throws HttpMessageException on failure
      */
     public boolean createCollection(int uid, PhotoCollection collection) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt1 = conn.prepareStatement("INSERT INTO collection (name, pub, uri) " +
                             "VALUES (?, ?, ?);",
                     Statement.RETURN_GENERATED_KEYS);
             stmt1.setString(1, collection.name);
-            stmt1.setBoolean(2, collection.isPublic);
+            stmt1.setInt(2, collection.isPublic);
             stmt1.setString(3, collection.uri);
             stmt1.executeUpdate();
 
             // TODO: check that these validations are correct (i.e., duplicate checks)
             ResultSet keyResultSet = stmt1.getGeneratedKeys();
             if(!keyResultSet.next())
+            {
+                conn.close();
                 throw new HttpMessageException(401, COLLECTION_NAME_INVALID);
+            }
             int cid = keyResultSet.getInt("cid");
 
             PreparedStatement stmt2 = conn.prepareStatement("INSERT INTO acl (cid, uid, role) VALUES (?, ?, ?);");
@@ -113,9 +178,15 @@ public class CollectionStore {
             stmt2.setInt(2, uid);
             stmt2.setInt(3, ACLEntry.Role.ROLE_OWNER.toInt());
             stmt2.executeUpdate();
-
+            conn.close();
             return true;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -127,17 +198,32 @@ public class CollectionStore {
      * @return      list of photo objects from collection
      * @throws HttpMessageException on failure
      */
-    public PhotoCollection getCollection(int cid) throws HttpMessageException {
+    public PhotoCollection getCollection(int uid, int cid) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             // get collection details
-            PreparedStatement stmt = conn.prepareStatement("SELECT name, uri, pub FROM collection WHERE cid=?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT name, pub, description, photo.uri as cover_photo " +
+                    "FROM collection " +
+                    "LEFT JOIN photo ON cover_photo=pid " +
+                    "WHERE cid=?");
             stmt.setInt(1, cid);
             ResultSet rs = stmt.executeQuery();
+
             if(!rs.next())
-                throw new HttpMessageException(401, COLLECTION_NOT_FOUND);
+            {
+                conn.close();
+                throw new HttpMessageException(404, COLLECTION_NOT_FOUND);
+            }
             String collectionName = rs.getString("name");
-            String collectionUri = rs.getString("uri");
-            boolean collectionIsPublic = rs.getBoolean("pub");
+            int collectionIsPublic = rs.getInt("pub");
+            String description = rs.getString("description");
+            String coverPhotoUri = rs.getString("cover_photo");
 
             // get acl list
             stmt = conn.prepareStatement("SELECT username, role FROM " +
@@ -149,20 +235,53 @@ public class CollectionStore {
             while(rs.next())
                 aclList.add(new ACLEntry(rs.getString("username"), rs.getInt("role")));
 
+            // if only discoverable and user not in acl list, end here
+            // (otherwise user is in ACL list or the collection is public, either of which is permissible to view
+            // the entire collection)
+            if(collectionIsPublic==2) {
+                // quickly check if user is in collection
+                stmt = conn.prepareStatement("SELECT cid FROM acl WHERE cid=? AND uid=?");
+                stmt.setInt(1, cid);
+                stmt.setInt(2, uid);
+                rs = stmt.executeQuery();
+                if(!rs.next()) {
+                    PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName,
+                            aclList, coverPhotoUri, description);
+                    photoCollection.setPhotos(new ArrayList<>());
+                    conn.close();
+                    return photoCollection;
+                }
+            }
+
             // get photo list
-            stmt = conn.prepareStatement("SELECT uri,description,upload_date FROM photo " +
+            stmt = conn.prepareStatement("SELECT uri, caption, filename, upload_date, width, height FROM photo " +
                     "INNER JOIN icj ON icj.pid=photo.pid WHERE icj.cid=?");
             stmt.setInt(1, cid);
             rs = stmt.executeQuery();
             List<Photo> photoList = new ArrayList<>();
-            while(rs.next())
-                photoList.add(new Photo(rs.getString("uri"), rs.getString("description"), rs.getDate("upload_date")));
+            while(rs.next()) {
+                Photo.PhotoMetadata photoMetadata = new Photo.PhotoMetadata();
+                photoMetadata.width = rs.getInt("width");
+                photoMetadata.height = rs.getInt("height");
+                photoList.add(new Photo(rs.getString("uri"),
+                                        rs.getString("filename"),
+                                        rs.getString("caption"),
+                                        rs.getDate("upload_date"),
+                                        photoMetadata));
+            }
 
-            PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName, collectionUri, aclList);
+            PhotoCollection photoCollection = new PhotoCollection(collectionIsPublic, collectionName,
+                    aclList, coverPhotoUri, description);
             photoCollection.setPhotos(photoList);
-
+            conn.close();
             return photoCollection;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -176,6 +295,13 @@ public class CollectionStore {
      * @throws HttpMessageException on failure or if user doesn't have access
      */
     public int getUserCollectionRole(int uid, int cid) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT role FROM acl WHERE uid=? AND cid=?");
             stmt.setInt(1, uid);
@@ -183,10 +309,19 @@ public class CollectionStore {
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
+            {
+                conn.close();
                 throw new HttpMessageException(401, INSUFFICIENT_COLLECTION_PERMISSIONS);
-
+            }
+            conn.close();
             return rs.getInt("role");
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -201,6 +336,13 @@ public class CollectionStore {
      * @throws HttpMessageException on failure on failure on failure on failure
      */
     public boolean addRemoveImage(int cid, int pid, boolean isAdd) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             // try to insert image (will fail if not unique) or remove image
             PreparedStatement stmt;
@@ -211,11 +353,24 @@ public class CollectionStore {
             stmt.setInt(2, pid);
 
             stmt.executeUpdate();
+            conn.close();
             return true;
         } catch(SQLIntegrityConstraintViolationException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             // image already exists in collection
             throw new HttpMessageException(401, IMAGE_EXISTS_IN_COLLECTION);
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -228,6 +383,13 @@ public class CollectionStore {
      * @throws HttpMessageException on error
      */
     public List<ACLEntry> getAclList(int cid) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             // create a map of current acl list to perform checks against
             PreparedStatement stmt = conn.prepareStatement("SELECT uid, role FROM acl WHERE cid=?");
@@ -237,15 +399,21 @@ public class CollectionStore {
             List<ACLEntry> aclList = new ArrayList<>();
             while(rs.next())
                 aclList.add(new ACLEntry(rs.getInt("uid"), rs.getInt("role")));
-
+            conn.close();
             return aclList;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
 
     /**
-     * Update collection attributes or acl
+     * Update collection attributes or acl. Assume validation already completed
      * @param cid               collection cid
      * @param photoCollection   attributes to change
      * @param ownerUid          owner uid
@@ -253,6 +421,13 @@ public class CollectionStore {
      * @throws HttpMessageException on failure
      */
     public boolean update(int cid, PhotoCollection photoCollection, int ownerUid) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             // update name and uri, if specified
             if (photoCollection.name != null && photoCollection.name.length() > 0) {
@@ -263,7 +438,42 @@ public class CollectionStore {
                 stmt.executeUpdate();
             }
 
-            // update acl list; do all as one callback
+            // update description, if specified
+            if(photoCollection.description != null) {
+                PreparedStatement stmt = conn.prepareStatement("UPDATE collection SET description=? WHERE cid=?");
+                stmt.setString(1, photoCollection.description);
+                stmt.setInt(2, cid);
+                stmt.executeUpdate();
+            }
+
+            // update cover photo, if specified
+            if(photoCollection.coverPhotoUri != null) {
+                // removing a cover photo
+                if(photoCollection.coverPhotoUri.length()==0) {
+                    PreparedStatement stmt = conn.prepareStatement("UPDATE collection SET cover_photo=NULL WHERE cid=?");
+                    stmt.setInt(1, cid);
+                    stmt.executeUpdate();
+                }
+                // adding a cover photo
+                else {
+                    PreparedStatement stmt = conn.prepareStatement("UPDATE collection " +
+                            "SET cover_photo=(SELECT pid FROM photo WHERE uri=?) " +
+                            "WHERE cid=?");
+                    stmt.setString(1, photoCollection.coverPhotoUri);
+                    stmt.setInt(2, cid);
+                    stmt.executeUpdate();
+                }
+            }
+
+            // update public, if specified
+            if(photoCollection.isPublic != -1) {
+                PreparedStatement stmt = conn.prepareStatement("UPDATE collection SET pub=? WHERE cid=?");
+                stmt.setInt(1, photoCollection.isPublic);
+                stmt.setInt(2, cid);
+                stmt.executeUpdate();
+            }
+
+            // update acl list; do all as one transaction
             if (photoCollection.aclList.size() > 0) {
                 conn.setAutoCommit(false);
 
@@ -274,7 +484,10 @@ public class CollectionStore {
                 for (ACLEntry entry : photoCollection.aclList) {
                     // shouldn't happen, just an extra check to prevent NullPointerException
                     if(entry.operation==null)
+                    {
+                        conn.close();
                         throw new HttpMessageException(400, ILLEGAL_ACL_ACTION, "UNRECOGNIZED ACL ACTION");
+                    }
 
                     if(entry.operation==OP_INSERT || entry.operation==OP_INSERT_OWNER) {
                         insertStmt.setInt(1, cid);
@@ -314,13 +527,25 @@ public class CollectionStore {
                 conn.commit();
                 conn.setAutoCommit(true);
             }
-
+            conn.close();
             return true;
         } catch(SQLIntegrityConstraintViolationException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             // if try to insert duplicate acl records for same db; this will be eliminated when stricter checks
             // on ACL list on service layer are implemented
             throw new HttpMessageException(401, COLLECTION_NAME_INVALID);
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -333,16 +558,27 @@ public class CollectionStore {
      * @throws HttpMessageException on failure
      */
     public boolean deleteCollection(int cid) throws HttpMessageException {
+        Connection conn = null;
         try {
-            PreparedStatement stmt = conn.prepareStatement("DELETE collection, icj, acl FROM collection " +
-                    "LEFT JOIN icj ON icj.cid=collection.cid " +
-                    "LEFT JOIN acl ON acl.cid=collection.cid " +
-                    "WHERE collection.cid=?");
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
+        try {
+            // delete collection; should gracefully cascade into deleting icj and acl entries
+            PreparedStatement stmt = conn.prepareStatement("DELETE FROM collection WHERE collection.cid=?");
             stmt.setInt(1, cid);
             stmt.executeUpdate();
-
+            conn.close();
             return true;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }

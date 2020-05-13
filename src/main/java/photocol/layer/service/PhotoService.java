@@ -1,5 +1,15 @@
 package photocol.layer.service;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Directory;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
+import com.drew.metadata.Tag;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
+import com.drew.metadata.file.FileTypeDirectory;
+import com.drew.metadata.jpeg.JpegDirectory;
+import com.drew.metadata.png.PngDirectory;
 import photocol.definitions.Photo;
 import photocol.definitions.exception.HttpMessageException;
 import photocol.layer.store.PhotoStore;
@@ -7,6 +17,9 @@ import photocol.util.S3ConnectionClient;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import static photocol.definitions.exception.HttpMessageException.Error.*;
@@ -24,39 +37,63 @@ public class PhotoService {
      * Upload an image to S3
      * @param contentType   content type of image
      * @param data          image data as a byte array
-     * @param imageuri      original filename
+     * @param filename      original filename
      * @param uid           image owner
      * @return              auto-generated uid of uploaded image
      * @throws HttpMessageException on failure
      */
-    public String upload(String contentType, byte[] data, String imageuri, int uid)
+    public String upload(String contentType, byte[] data, String filename, int uid)
             throws HttpMessageException {
-        // for a more exhaustive list, see: https://www.iana.org/assignments/media-types/media-types.xhtml#image
-        // for now, only common ones allowed
-        // TODO: make this more inclusive and robust
-        // TODO: in the future, verify image sizes and formats
-        String ext;
-        if(contentType==null)
-            throw new HttpMessageException(400, IMAGE_MIMETYPE_INVALID);
-        switch(contentType) {
-            case "image/jpg": case "image/jpeg": ext = "jpg"; break;
-            case "image/gif": ext = "gif"; break;
-            case "image/png": ext = "png"; break;
-            default:
-                throw new HttpMessageException(400, IMAGE_MIMETYPE_INVALID);
-        }
 
-        // generate unique URI
-        // TODO: make this more robust (and fixed-length)
+        // generate unique (16-character fixed-length) URI
         String randUri;
         do {
-            randUri = String.valueOf(Math.random()).substring(2);
+            randUri = ("00000000000" + String.valueOf(Math.random()).replace(".", ""));
+            randUri = randUri.substring(randUri.length()-16);
         } while(photoStore.checkIfPhotoExists(randUri));
 
-        String newUri = randUri + "." + ext;
-        s3.putObject(data, newUri);
-        photoStore.createImage(newUri, imageuri, uid);
+        // content-type is not used; instead, extract mimetype
+        String mimeType;
+        String extension;
+        Photo.PhotoMetadata photoMetadata = new Photo.PhotoMetadata();
 
+        // extract select metadata
+        // library: https://github.com/drewnoakes/metadata-extractor
+        // TODO: this cannot process some formats, e.g., SVG
+        try {
+            Metadata metadata = ImageMetadataReader.readMetadata(new ByteArrayInputStream(data));
+
+            // extract mimetype, extension
+            FileTypeDirectory fileTypeDirectory = metadata.getFirstDirectoryOfType(FileTypeDirectory.class);
+            photoMetadata.mimeType = fileTypeDirectory.getString(FileTypeDirectory.TAG_DETECTED_FILE_MIME_TYPE);
+            extension = fileTypeDirectory.getString(FileTypeDirectory.TAG_EXPECTED_FILE_NAME_EXTENSION);
+
+            // extract image width and height
+            for(Directory directory : metadata.getDirectories()) {
+                for(Tag tag : directory.getTags()) {
+                    if(tag.getTagName().equals("Image Width"))
+                        photoMetadata.width = directory.getInt(tag.getTagType());
+                    if(tag.getTagName().equals("Image Height"))
+                        photoMetadata.height = directory.getInt(tag.getTagType());
+                }
+            }
+
+            // invalid nonimage
+            if(!photoMetadata.mimeType.split("/")[0].equals("image"))
+                throw new ImageProcessingException("");
+        } catch(IOException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, INPUT_FORMAT_ERROR, "IOEXCEPTION_READING_IMAGE " + filename);
+        } catch(ImageProcessingException err) {
+            throw new HttpMessageException(401, INPUT_FORMAT_ERROR, "IMAGE_FORMAT_ERROR " + filename);
+        } catch (MetadataException err) {
+            throw new HttpMessageException(401, INPUT_FORMAT_ERROR, "METADATA_FETCH_ERROR " + filename);
+        }
+
+        String newUri = randUri + "." + extension;
+        s3.putObject(data, newUri);
+
+        photoStore.createPhoto(new Photo(newUri, filename, "", new Date(), photoMetadata), uid);
         return newUri;
     }
 
@@ -101,5 +138,18 @@ public class PhotoService {
         s3.deleteObject(uri);
 
         return true;
+    }
+
+    /**
+     * Get photo details (simple passthrough)
+     * @param photouri  photouri of image
+     * @param uid       uid of accessor
+     * @return          photo details
+     * @throws HttpMessageException on error
+     */
+    public Photo details(String photouri, int uid) throws HttpMessageException {
+        int pid = this.photoStore.checkPhotoPermissions(photouri, uid, false);
+
+        return this.photoStore.details(pid);
     }
 }

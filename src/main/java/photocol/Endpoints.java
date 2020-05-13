@@ -19,22 +19,42 @@ public class Endpoints {
     public Endpoints(UserHandler userHandler, CollectionHandler collectionHandler, PhotoHandler photoHandler,
                      SearchHandler searchHandler, Gson gson) {
 
+        // purely for getting images and collections, may not require login
         path("/perma", () -> {
-            // no CORS setup required here -- static resource
-            before("/*", this::checkLoggedIn);
-            get("/:photouri", photoHandler::permalink);
+            // no CORS setup required for static resource (image)
+            // login not required for pictures and collections (i.e., public)
+            path("/:photouri", () -> {
+                before("/details", this::setupCors);
+
+                get("", photoHandler::permalink);
+                get("/download/:downloadfilename", photoHandler::permalink);
+                get("/details", photoHandler::details, gson::toJson);
+            });
+
+            path("/collection/:username/:collectionuri", () -> {
+                before("", this::setupCors);
+                get("", collectionHandler::getCollection, gson::toJson);
+            });
         });
 
+        // for user data/settings, most don't require login
         path("/user", () -> {
             before("/*", this::setupCors);
             before("/logout", this::checkLoggedIn);
+            before("/update", this::checkLoggedIn);
 
             post("/signup", userHandler::signUp, gson::toJson);
             post("/login", userHandler::logIn, gson::toJson);
             get("/logout", userHandler::logOut, gson::toJson);
             get("/details", userHandler::userDetails, gson::toJson);
+            post("/update", userHandler::update, gson::toJson);
+            path("/profile", () -> {
+                get("", userHandler::getProfile, gson::toJson);
+                get("/:username", userHandler::getProfile, gson::toJson);
+            });
         });
 
+        // for changing photo information, requires login
         path("/photo", () -> {
             before("/*", this::setupCors);
             before("/*", this::checkLoggedIn);
@@ -47,6 +67,7 @@ public class Endpoints {
             });
         });
 
+        // for changing collection information, requires login
         path("/collection", () -> {
             before("/*", this::setupCors);
             before("/*", this::checkLoggedIn);
@@ -54,7 +75,6 @@ public class Endpoints {
             get("/currentuser", collectionHandler::getUserCollections, gson::toJson);
             post("/new", collectionHandler::createCollection, gson::toJson);
             path("/:username/:collectionuri", () -> {
-                get("", collectionHandler::getCollection, gson::toJson);
                 post("/update", collectionHandler::updateCollection, gson::toJson);
                 post("/addphoto", collectionHandler::addRemovePhoto, gson::toJson);
                 post("/removephoto", collectionHandler::addRemovePhoto, gson::toJson);
@@ -62,6 +82,7 @@ public class Endpoints {
             });
         });
 
+        // search paths, may not require login
         path("/search", () -> {
             before("/*", this::setupCors);
 
@@ -73,6 +94,12 @@ public class Endpoints {
             res.status(exception.status());
             res.body("{\"error\":\"" + exception.error()
                     + (exception.details()!=null ? "\",\"details\":\"" + exception.details() + "\"}" : "\"}"));
+        });
+        // catch all other errors
+        exception(Exception.class, (exception, req, res) -> {
+            exception.printStackTrace();
+            res.status(500);
+            res.body("{\"error\":\"INTERNAL_SERVER_ERROR\"}");
         });
     }
 

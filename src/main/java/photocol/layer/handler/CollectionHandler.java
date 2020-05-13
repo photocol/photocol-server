@@ -81,7 +81,9 @@ public class CollectionHandler {
      * @throws HttpMessageException on failure
      */
     public PhotoCollection getCollection(Request req, Response res) throws HttpMessageException {
-        int uid = req.session().attribute("uid");
+        Integer uid = req.session().attribute("uid");
+        if(uid==null)
+            uid=-1;
 
         String collectionUri = req.params("collectionuri");
         String collectionOwner = req.params("username");

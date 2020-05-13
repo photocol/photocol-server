@@ -1,20 +1,23 @@
 package photocol.layer.store;
 
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import photocol.definitions.ACLEntry;
+import photocol.definitions.PhotoCollection;
 import photocol.definitions.User;
 import photocol.definitions.exception.HttpMessageException;
-import photocol.layer.DataBase.Method.InitDB;
+import photocol.util.DBConnectionClient;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import static photocol.definitions.exception.HttpMessageException.Error.*;
-import static photocol.definitions.response.StatusResponse.Status.*;
 
 public class UserStore {
-    Connection conn = null;
-    public UserStore(){
-        conn = new InitDB().initialDB("photocol");
+    DataSource dbcp;
+    public UserStore(DBConnectionClient dbClient) {
+        dbcp = dbClient.getDataSource();
     }
 
     /**
@@ -24,22 +27,45 @@ public class UserStore {
      * @throws HttpMessageException on failure
      */
     public int createUser(User user) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt =
                     conn.prepareStatement("INSERT INTO user (email, username, password) VALUES(?,?,?);",
                             Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, user.email);
             stmt.setString(2, user.username);
-            stmt.setString(3, user.passwordHash);
+
+            // hash/salt password using spring-security's crypto bcrypt class
+            stmt.setString(3, BCrypt.hashpw(user.password, BCrypt.gensalt(12)));
 
             stmt.executeUpdate();
             ResultSet rs = stmt.getGeneratedKeys();
             rs.next();
-            return rs.getInt("uid");
+            int get = rs.getInt("uid");
+            conn.close();
+            return get;
         } catch(SQLIntegrityConstraintViolationException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             // unique contraint violated (username not unique)
             throw new HttpMessageException(401, CREDENTIALS_NOT_UNIQUE);
         } catch (SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -52,13 +78,21 @@ public class UserStore {
      * @throws HttpMessageException on failure
      */
     public boolean checkIfUserExists(String username) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM user WHERE username=?");
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
-
-            return rs.next();
-        } catch (SQLException err){
+            boolean next = rs.next();
+            conn.close();
+            return next;
+        } catch (SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -71,18 +105,38 @@ public class UserStore {
      * @throws HttpMessageException on failure or incorrect credentials
      */
     public int checkCredentials(User user) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT uid, password FROM user WHERE username=?");
             stmt.setString(1, user.username);
             ResultSet rs = stmt.executeQuery();
 
-            // TODO: implement more advanced check w/ one-way hashing
-            rs.next();
-            if(rs.getString(2).equals(user.passwordHash))
-                return rs.getInt("uid");
+            if(!rs.next())
+            {
+                conn.close();
+                throw new HttpMessageException(401, USER_NOT_FOUND);
+            }
 
+            if(BCrypt.checkpw(user.password, rs.getString("password")))
+            {
+                conn.close();
+                return rs.getInt("uid");
+            }
+            conn.close();
             throw new HttpMessageException(401, CREDENTIALS_INVALID);
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -95,16 +149,33 @@ public class UserStore {
      * @throws HttpMessageException on failure or user not found
      */
     public int getUid(String username) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT uid FROM user WHERE username=?");
             stmt.setString(1, username);
 
             ResultSet rs = stmt.executeQuery();
             if(!rs.next())
+            {
+                conn.close();
                 throw new HttpMessageException(401, USER_NOT_FOUND, username);
-
-            return rs.getInt("uid");
+            }
+            int get = rs.getInt("uid");
+            conn.close();
+            return get;
         } catch(SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
@@ -117,6 +188,13 @@ public class UserStore {
      * @throws HttpMessageException on error
      */
     public List<String> searchUsers(String query) throws HttpMessageException {
+        Connection conn = null;
+        try {
+            conn = dbcp.getConnection();
+        } catch (SQLException err) {
+            System.err.println("Error connecting to database.");
+            err.printStackTrace();
+        }
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT username FROM user " +
                     "WHERE username LIKE ? OR email LIKE ?");
@@ -127,8 +205,65 @@ public class UserStore {
             List<String> usernameList = new ArrayList<>();
             while(rs.next())
                 usernameList.add(rs.getString("username"));
-
+            conn.close();
             return usernameList;
+        } catch (SQLException err) {
+            try {
+                conn.close();
+            } catch (SQLException throwables) {
+                System.err.println("Error connecting to database.");
+                throwables.printStackTrace();
+            }
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Fetch details about user
+     * @param username  username whose details to fetch
+     * @return          user details
+     * @throws HttpMessageException on failure
+     */
+    public User getProfile(String username) throws HttpMessageException {
+        try(Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("SELECT email, username, display_name, photo.uri as profile_photo_uri " +
+                    "FROM user " +
+                    "LEFT JOIN photo ON user.profile_photo=photo.pid " +
+                    "WHERE username=?");
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            if(!rs.next())
+                throw new HttpMessageException(404, USER_NOT_FOUND);
+
+            return new User(rs.getString("email"),
+                    rs.getString("username"),
+                    rs.getString("display_name"),
+                    rs.getString("profile_photo_uri"));
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Update user fields
+     * @param fields    fields to update
+     * @param uid       user uid
+     * @return          true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(User fields, int uid) throws HttpMessageException {
+        try(Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("UPDATE user SET display_name=?, profile_photo=? " +
+                    "WHERE uid=?");
+            stmt.setString(1, fields.displayName);
+            stmt.setObject(2, fields.profilePhoto==null?null:fields.profilePhotoPid);
+            stmt.setInt(3, uid);
+
+            stmt.executeUpdate();
+            return true;
         } catch (SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);

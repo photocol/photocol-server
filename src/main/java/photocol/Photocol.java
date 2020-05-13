@@ -1,33 +1,25 @@
 /* Main class for the Photocol app */
-
 package photocol;
 
 import com.google.gson.Gson;
-import photocol.layer.handler.SearchHandler;
-import photocol.layer.store.UserStore;
-import photocol.layer.handler.CollectionHandler;
-import photocol.layer.handler.PhotoHandler;
-import photocol.layer.handler.UserHandler;
-import photocol.layer.service.CollectionService;
-import photocol.layer.service.PhotoService;
-import photocol.layer.service.UserService;
-import photocol.layer.store.CollectionStore;
-import photocol.layer.store.PhotoStore;
-import photocol.util.S3ConnectionClient;
+import photocol.layer.handler.*;
+import photocol.layer.service.*;
+import photocol.layer.store.*;
+import photocol.util.*;
 
 public class Photocol {
     public static void main(String[] args) {
-
         // services
         Gson gson = new Gson();
         S3ConnectionClient s3 = new S3ConnectionClient();
+        DBConnectionClient dbClient = new DBConnectionClient();
 
         // initialize layers
-        UserStore userStore = new UserStore();
-        CollectionStore collectionStore = new CollectionStore();
-        PhotoStore photoStore = new PhotoStore();
+        UserStore userStore = new UserStore(dbClient);
+        CollectionStore collectionStore = new CollectionStore(dbClient);
+        PhotoStore photoStore = new PhotoStore(dbClient);
 
-        UserService userService = new UserService(userStore);
+        UserService userService = new UserService(userStore, photoStore, collectionStore);
         CollectionService collectionService = new CollectionService(collectionStore, photoStore, userStore);
         PhotoService photoService = new PhotoService(photoStore, s3);
 

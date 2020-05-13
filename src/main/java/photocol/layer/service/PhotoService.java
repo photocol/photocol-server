@@ -77,15 +77,17 @@ public class PhotoService {
                         photoMetadata.height = directory.getInt(tag.getTagType());
                 }
             }
+
+            // invalid nonimage
+            if(!photoMetadata.mimeType.split("/")[0].equals("image"))
+                throw new ImageProcessingException("");
         } catch(IOException err) {
             err.printStackTrace();
-            throw new HttpMessageException(500, INPUT_FORMAT_ERROR, "IOEXCEPTION_READING_IMAGE");
+            throw new HttpMessageException(500, INPUT_FORMAT_ERROR, "IOEXCEPTION_READING_IMAGE " + filename);
         } catch(ImageProcessingException err) {
-            err.printStackTrace();
-            throw new HttpMessageException(500, INPUT_FORMAT_ERROR, "IMAGE_FORMAT_ERROR");
+            throw new HttpMessageException(401, INPUT_FORMAT_ERROR, "IMAGE_FORMAT_ERROR " + filename);
         } catch (MetadataException err) {
-            err.printStackTrace();
-            throw new HttpMessageException(500, INPUT_FORMAT_ERROR, "METADATA_FETCH_ERROR");
+            throw new HttpMessageException(401, INPUT_FORMAT_ERROR, "METADATA_FETCH_ERROR " + filename);
         }
 
         String newUri = randUri + "." + extension;

@@ -28,6 +28,7 @@ public class HttpMessageException extends Exception {
         IMAGE_NOT_FOUND,
         IMAGE_EXISTS_IN_COLLECTION,
         ILLEGAL_ACL_ACTION,
+        CANNOT_LEAVE_NONEMPTY_COLLECTION_AS_OWNER,
         NOT_PHOTO_OWNER
     }
 

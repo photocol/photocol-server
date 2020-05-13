@@ -8,6 +8,7 @@ public class Photo {
     public String caption;
     public Date uploadDate;
     public PhotoMetadata metadata;
+    public String ownerUsername;
 
     public static class PhotoMetadata {
         public String mimeType;

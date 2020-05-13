@@ -332,8 +332,9 @@ public class PhotoStore {
      */
     public Photo details(int pid) throws HttpMessageException {
         try (Connection conn = dbcp.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement("SELECT uri, filename, mime_type, upload_date, caption, " +
-                    "uid, orig_uid, exposure_time, f_number, iso, width, height, capture_date FROM photo " +
+            PreparedStatement stmt = conn.prepareStatement("SELECT username, uri, filename, mime_type, upload_date, caption, " +
+                    "orig_uid, exposure_time, f_number, iso, width, height, capture_date FROM photo " +
+                    "INNER JOIN user ON photo.uid=user.uid " +
                     "WHERE pid=?");
             stmt.setInt(1, pid);
 
@@ -354,7 +355,31 @@ public class PhotoStore {
                     rs.getString("caption"),
                     rs.getDate("upload_date"),
                     photoMetadata);
+            String username = rs.getString("username");
+            photo.ownerUsername = username;
             return photo;
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
+
+    /**
+     * Update photo
+     * @param photo attributes to upate
+     * @param pid   photo pid
+     * @return      true on success
+     * @throws HttpMessageException on failure
+     */
+    public boolean update(Photo photo, int pid) throws HttpMessageException {
+        try(Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("UPDATE photo SET caption=?, filename=? WHERE pid=?");
+            stmt.setString(1, photo.caption);
+            stmt.setString(2, photo.filename);
+            stmt.setInt(3, pid);
+
+            stmt.executeUpdate();
+            return true;
         } catch(SQLException err) {
             err.printStackTrace();
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);

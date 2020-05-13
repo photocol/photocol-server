@@ -79,6 +79,7 @@ public class Endpoints {
                 post("/addphoto", collectionHandler::addRemovePhoto, gson::toJson);
                 post("/removephoto", collectionHandler::addRemovePhoto, gson::toJson);
                 post("/delete", collectionHandler::deleteCollection, gson::toJson);
+                get("/leave", collectionHandler::leaveCollection, gson::toJson);
             });
         });
 

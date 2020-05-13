@@ -583,4 +583,18 @@ public class CollectionStore {
             throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
         }
     }
+
+    public boolean leaveCollection(int cid, int uid) throws HttpMessageException {
+        try(Connection conn = dbcp.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("DELETE FROM acl WHERE cid=? AND uid=?");
+            stmt.setInt(1, cid);
+            stmt.setInt(2, uid);
+
+            stmt.executeUpdate();
+            return true;
+        } catch(SQLException err) {
+            err.printStackTrace();
+            throw new HttpMessageException(500, DATABASE_QUERY_ERROR);
+        }
+    }
 }

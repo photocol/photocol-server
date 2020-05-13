@@ -1,6 +1,7 @@
 package photocol.definitions.request;
 
 import photocol.definitions.ACLEntry;
+import photocol.definitions.Photo;
 import photocol.definitions.PhotoCollection;
 import photocol.definitions.User;
 import photocol.definitions.exception.HttpMessageException;
@@ -209,6 +210,39 @@ public class EndpointRequestModel {
         @Override
         public String toServiceType() {
             return uri;
+        }
+    }
+
+    // endpoint: POST /photo/:photouri/update
+    public static class PhotoUpdateRequest implements EndpointRequest<Photo> {
+        public String caption;
+        public String filename;
+
+        final static Pattern filenamePattern = Pattern.compile("[^-_.A-Za-z0-9]");
+
+        @Override
+        public boolean isValid() throws HttpMessageException {
+            caption = caption.trim();
+            filename = filename.trim();
+
+            if(caption.length()>1000)
+                formatErrorHandler("CAPTION_LENGTH");
+
+            if(filename.length()==0)
+                formatErrorHandler("FILENAME_MISSING");
+
+            if(filename.length()>255)
+                formatErrorHandler("FILENAME_LENGTH");
+
+            if(filenamePattern.matcher(filename).matches())
+                formatErrorHandler("INVALID_FILENAME");
+
+            return true;
+        }
+
+        @Override
+        public Photo toServiceType() {
+            return new Photo(null, filename, caption, null, null);
         }
     }
 }
